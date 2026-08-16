@@ -116,6 +116,8 @@ public class BaldosaPregunta : MonoBehaviour
                     EvaluarRespuesta(1);
                 else if (e.keyCode == KeyCode.Alpha3 || e.keyCode == KeyCode.Keypad3)
                     EvaluarRespuesta(2);
+                else if (e.keyCode == KeyCode.Alpha4 || e.keyCode == KeyCode.Keypad4)
+                    UsarIA();
             }
         }
     }
@@ -127,10 +129,25 @@ public class BaldosaPregunta : MonoBehaviour
             string textoCompleto = $"{enunciadoPregunta}\n\n" +
                                    $"[1] {textoOpciones[0]}\n" +
                                    $"[2] {textoOpciones[1]}\n" +
-                                   $"[3] {textoOpciones[2]}";
-            
+                                   $"[3] {textoOpciones[2]}\n" +
+                                   $"[4] Usar IA (mayor consumo de agua)";
+
             GameManager.Instance.uiManager.MostrarMensajeTerminal(textoCompleto);
         }
+    }
+
+    // Delega la respuesta a la IA: avanza sin pensar, a costa de un consumo de agua mayor al de cualquier opción manual
+    private void UsarIA()
+    {
+        respondida = true;
+        jugadorEncima = false;
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.UsarBotonIA();
+        }
+
+        CongelarJugador(false);
     }
 
     private void EvaluarRespuesta(int indiceOpcion)
