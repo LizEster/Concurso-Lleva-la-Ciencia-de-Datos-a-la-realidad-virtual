@@ -18,6 +18,7 @@ public class BaldosaPregunta : MonoBehaviour
 
     private bool jugadorEncima = false;
     private bool respondida = false;
+    public bool EstaRespondida => respondida;
     private GameObject playerObjeto;
     private MonoBehaviour scriptMovimientoPlayer;
 
