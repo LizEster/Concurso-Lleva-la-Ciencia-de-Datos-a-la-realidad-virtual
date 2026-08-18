@@ -13,6 +13,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Referencias de UI")]
     public UIManager uiManager;
+    public NivelAgua nivelAgua;
 
     [Header("Referencias del Mapa (Túnel Fucsia)")]
     [Tooltip("Arrastra aquí tu objeto 'Suelo_Tunel_Fucsia' desde la jerarquía")]
@@ -54,7 +55,10 @@ public class GameManager : MonoBehaviour
             uiManager.ActualizarMétricas(refrigeracion, aguaConsumidaLitros);
             uiManager.MostrarMensajeTerminal(mensaje);
         }
-
+        if (nivelAgua != null)          // ← nuevo
+        {
+            nivelAgua.ActualizarNivel(refrigeracion);
+        }
         if (refrigeracion <= 0f)
         {
             StartCoroutine(ProcesarColapsoTermico());
