@@ -47,7 +47,7 @@ public class BaldosaPregunta : MonoBehaviour
                 costoRefri[0] = 45f; costoAgua[0] = 1.5f; // Castigo alto
                 mensajeResultado[0] = "> Error de coherencia vectorial. El datacenter disipa calor crítico.";
 
-                textoOpciones[1] = "REINA"; // Correcta
+                textoOpciones[1] = "Reina"; // Correcta
                 costoRefri[1] = 5f; costoAgua[1] = 0.15f; 
                 mensajeResultado[1] = "> Procesamiento eficiente. El puente de luz se forma en verde brillante.";
 
@@ -83,7 +83,7 @@ public class BaldosaPregunta : MonoBehaviour
                 costoRefri[1] = 45f; costoAgua[1] = 1.5f; 
                 mensajeResultado[1] = "> Error de coherencia. Los ventiladores no logran mitigar el impacto térmico.";
 
-                textoOpciones[2] = "PROFESOR"; // Correcta
+                textoOpciones[2] = "Profesor"; // Correcta
                 costoRefri[2] = 5f; costoAgua[2] = 0.15f; 
                 mensajeResultado[2] = "> OUTPUT GENERADO. La gran compuerta del final se ilumina.";
                 break;
