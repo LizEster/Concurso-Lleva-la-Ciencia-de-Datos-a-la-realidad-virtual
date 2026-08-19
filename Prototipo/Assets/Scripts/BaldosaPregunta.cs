@@ -131,7 +131,7 @@ public class BaldosaPregunta : MonoBehaviour
                                    $"[1] {textoOpciones[0]}\n" +
                                    $"[2] {textoOpciones[1]}\n" +
                                    $"[3] {textoOpciones[2]}\n" +
-                                   $"[4] Usar IA (mayor consumo de agua)";
+                                   $"[4] Responder con IA";
 
             GameManager.Instance.uiManager.MostrarMensajeTerminal(textoCompleto);
         }
