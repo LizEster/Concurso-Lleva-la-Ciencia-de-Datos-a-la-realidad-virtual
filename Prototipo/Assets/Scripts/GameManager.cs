@@ -39,6 +39,11 @@ public class GameManager : MonoBehaviour
         {
             uiManager.ActualizarMétricas(refrigeracion, aguaConsumidaLitros);
         }
+
+        if (nivelAgua != null)          // ← nuevo
+        {
+            nivelAgua.ActualizarNivel(refrigeracion);
+        }
     }
 
     public void RegistrarGastoComputacional(float costoRefrigeracion, float litrosAgua, string mensaje)
