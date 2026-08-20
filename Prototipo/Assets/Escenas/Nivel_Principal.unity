@@ -676,8 +676,7 @@ Transform:
   m_LocalPosition: {x: -0, y: -0, z: 0.33}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1063092634}
+  m_Children: []
   m_Father: {fileID: 1765713493}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &202346050
@@ -3946,11 +3945,11 @@ Transform:
   m_GameObject: {fileID: 1063092633}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.012, z: -0.33}
+  m_LocalPosition: {x: 0, y: -0.012000174, z: 0}
   m_LocalScale: {x: 0.7, y: 1, z: 0.6999999}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 185517502}
+  m_Father: {fileID: 1765713493}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &1063092635
 CapsuleCollider:
@@ -6871,6 +6870,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 185517502}
+  - {fileID: 1063092634}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 89.751, y: -14.259, z: -13.732}
 --- !u!1001 &1765732705
@@ -8708,7 +8708,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e38f723d336ae4f4698767d309ada7f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NivelAgua
-  agua: {fileID: 0}
+  agua: {fileID: 1063092634}
   nivelMaximo: 100
   duracionTransicion: 1
   cambiarColor: 0
