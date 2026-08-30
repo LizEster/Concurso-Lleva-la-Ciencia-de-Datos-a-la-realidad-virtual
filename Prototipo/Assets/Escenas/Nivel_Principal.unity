@@ -2811,6 +2811,14 @@ MonoBehaviour:
   textoFinalExplicativo: {fileID: 0}
   fuenteAudioTeclado: {fileID: 830687499}
   velocidadEscritura: 0.04
+  canvasRectTransform: {fileID: 901236131}
+  escenaSiguiente: final1
+  colorFondoPanel: {r: 0, g: 0, b: 0, a: 0.85}
+  colorTextoBoton: {r: 1, g: 1, b: 1, a: 1}
+  colorFondoBoton: {r: 1, g: 1, b: 1, a: 0.15}
+  tamanoFuenteTexto: 24
+  tamanoFuenteBoton: 26
+  textoBotonContinuar: Continuar
 --- !u!82 &830687499
 AudioSource:
   m_ObjectHideFlags: 0
