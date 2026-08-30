@@ -76,6 +76,19 @@ public class GameManager : MonoBehaviour
         AvanzarDesafio();
     }
 
+    // Usado por las baldosas de pregunta (respuesta manual 1/2/3): registra el costo
+    // correspondiente a la opción elegida y, si era la opción correcta, avanza el desafío
+    // igual que hace ResponderCorrecto()/UsarBotonIA(). Antes de esto, responder bien a mano
+    // nunca hacía avanzar el contador y por lo tanto nunca se llegaba al final bueno.
+    public void RegistrarRespuesta(float costoRefrigeracion, float litrosAgua, string mensaje, bool esCorrecta)
+    {
+        RegistrarGastoComputacional(costoRefrigeracion, litrosAgua, mensaje);
+        if (esCorrecta)
+        {
+            AvanzarDesafio();
+        }
+    }
+
     public void ResponderIncorrecto()
     {
         RegistrarGastoComputacional(5f, 0.4f, "> Error de coherencia vectorial.\nProcesamiento adicional requerido. Reiniciando entorno...");

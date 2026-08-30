@@ -15,6 +15,7 @@ public class BaldosaPregunta : MonoBehaviour
     private float[] costoRefri = new float[3];
     private float[] costoAgua = new float[3];
     private string[] mensajeResultado = new string[3];
+    private int indiceCorrecta = -1;
 
     private bool jugadorEncima = false;
     private bool respondida = false;
@@ -48,6 +49,7 @@ public class BaldosaPregunta : MonoBehaviour
                 mensajeResultado[0] = "> Error de coherencia vectorial. El datacenter disipa calor crítico.";
 
                 textoOpciones[1] = "Reina"; // Correcta
+                indiceCorrecta = 1;
                 costoRefri[1] = 5f; costoAgua[1] = 0.15f; 
                 mensajeResultado[1] = "> Procesamiento eficiente. El puente de luz se forma en verde brillante.";
 
@@ -60,6 +62,7 @@ public class BaldosaPregunta : MonoBehaviour
                 enunciadoPregunta = "El panel holográfico se mantiene activo mostrando una nueva relación semántica:\n\nParís - Francia + Italia ≈ [¿?]";
                 
                 textoOpciones[0] = "Roma"; // Correcta
+                indiceCorrecta = 0;
                 costoRefri[0] = 5f; costoAgua[0] = 0.15f; 
                 mensajeResultado[0] = "> Procesamiento eficiente. Las conexiones vectoriales se estabilizan.";
 
@@ -84,6 +87,7 @@ public class BaldosaPregunta : MonoBehaviour
                 mensajeResultado[1] = "> Error de coherencia. Los ventiladores no logran mitigar el impacto térmico.";
 
                 textoOpciones[2] = "Profesor"; // Correcta
+                indiceCorrecta = 2;
                 costoRefri[2] = 5f; costoAgua[2] = 0.15f; 
                 mensajeResultado[2] = "> OUTPUT GENERADO. La gran compuerta del final se ilumina.";
                 break;
@@ -159,10 +163,11 @@ public class BaldosaPregunta : MonoBehaviour
 
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.RegistrarGastoComputacional(
+            GameManager.Instance.RegistrarRespuesta(
                 costoRefri[indiceOpcion], 
                 costoAgua[indiceOpcion], 
-                mensajeResultado[indiceOpcion]
+                mensajeResultado[indiceOpcion],
+                indiceOpcion == indiceCorrecta
             );
         }
 
