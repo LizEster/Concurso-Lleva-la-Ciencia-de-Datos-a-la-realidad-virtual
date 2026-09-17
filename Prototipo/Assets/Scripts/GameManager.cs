@@ -8,7 +8,6 @@ public class GameManager : MonoBehaviour
     [Header("Métricas del Data Center")]
     public float refrigeracion = 100f; 
     public float aguaConsumidaLitros = 0f;
-    private int desafioActual = 1;
     private bool juegoTerminado = false;
 
     [Header("Referencias de UI")]
@@ -70,43 +69,22 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void ResponderCorrecto()
-    {
-        RegistrarGastoComputacional(2f, 0.15f, "> Procesamiento eficiente. Conexiones vectoriales estables.");
-        AvanzarDesafio();
-    }
-
-    // Usado por las baldosas de pregunta (respuesta manual 1/2/3): registra el costo
-    // correspondiente a la opción elegida y, si era la opción correcta, avanza el desafío
-    // igual que hace ResponderCorrecto()/UsarBotonIA(). Antes de esto, responder bien a mano
-    // nunca hacía avanzar el contador y por lo tanto nunca se llegaba al final bueno.
+    // Usado por las baldosas de pregunta: registra el costo correspondiente a la opción
+    // elegida (haya sido correcta o no). El avance del nivel YA NO depende de acertar ni de
+    // ningún contador interno: quien decide cuándo se termina el nivel es físicamente la
+    // última baldosa del camino (la que no tiene "siguienteBaldosa"), llamando directamente a
+    // TerminarNivelConExito() en cuanto se responde. Antes, un contador de 3 respuestas
+    // correctas abría la salida aunque todavía quedaran pisos por cruzar; ahora el final
+    // llega exactamente cuando cruzas el último piso, sin importar cuántas acertaste,
+    // mientras te quede refrigeración.
     public void RegistrarRespuesta(float costoRefrigeracion, float litrosAgua, string mensaje, bool esCorrecta)
     {
         RegistrarGastoComputacional(costoRefrigeracion, litrosAgua, mensaje);
-        if (esCorrecta)
-        {
-            AvanzarDesafio();
-        }
-    }
-
-    public void ResponderIncorrecto()
-    {
-        RegistrarGastoComputacional(5f, 0.4f, "> Error de coherencia vectorial.\nProcesamiento adicional requerido. Reiniciando entorno...");
     }
 
     public void UsarBotonIA()
     {
         RegistrarGastoComputacional(35f, 2.5f, "> Respuesta generada automáticamente.\nMayor consumo computacional detectado por delegar razonamiento.");
-        AvanzarDesafio();
-    }
-
-    private void AvanzarDesafio()
-    {
-        desafioActual++;
-        if (desafioActual > 3)
-        {
-            LlegarAlFinal();
-        }
     }
 
     // CORRUTINA: Maneja la caída física en el túnel fucsia y espera 4 segundos antes del Game Over
@@ -135,13 +113,15 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void ActivarColapsoTermico()
+    /// <summary>
+    /// La llama la última baldosa del camino (la que no tiene "siguienteBaldosa" asignada)
+    /// apenas se responde su pregunta, sin importar si fue correcta o no. Si todavía queda
+    /// refrigeración, dispara el final exitoso; si ya llegó a 0%, el colapso térmico ya se
+    /// está encargando del final malo y este llamado no hace nada.
+    /// </summary>
+    public void TerminarNivelConExito()
     {
-        // Esta función queda en desuso ya que ahora lo maneja la corrutina de arriba
-    }
-
-    private void LlegarAlFinal()
-    {
+        if (juegoTerminado) return;
         if (refrigeracion > 0f)
         {
             StartCoroutine(ProcesarTransicionExito());
