@@ -34,10 +34,15 @@ public class SenializacionRuta : MonoBehaviour
     [Tooltip("Cada cuántos segundos recalcula el camino (por rendimiento)")]
     public float intervaloRecalculo = 0.4f;
 
+    [Header("Destino final")]
+    [Tooltip("La línea siempre apunta hacia GameManager.puertaFinalOficina. Al llegar a esta distancia, deja de mostrarse.")]
+    public float distanciaLlegadaFinal = 2f;
+
     /// <summary>Ruta actual pegada al suelo. El BotGuia la usa para caminar por delante del jugador.</summary>
     public IReadOnlyList<Vector3> RutaActual => rutaSuavizada;
 
     private BaldosaPregunta[] baldosas;
+    private bool yaLlegoADestino;
     private LineRenderer linea;
     private Material materialLinea;
     private float tiempoDesdeUltimoCalculo;
@@ -289,27 +294,22 @@ public class SenializacionRuta : MonoBehaviour
     public Transform ObtenerObjetivoActual()
     {
         if (jugador == null) return null;
+        if (yaLlegoADestino) return null;
 
-        BaldosaPregunta masCercanaSinResponder = null;
-        float distanciaMinima = float.MaxValue;
+        if (GameManager.Instance == null || GameManager.Instance.puertaFinalOficina == null)
+            return null;
 
-        foreach (BaldosaPregunta baldosa in baldosas)
+        Transform puerta = GameManager.Instance.puertaFinalOficina.transform;
+
+        // La línea guía siempre apunta a la puerta final (antes de las baldosas). Una vez
+        // que el jugador llega, se apaga para el resto de la partida (no vuelve a guiar
+        // hacia las baldosas Piso 1-5).
+        if (Vector3.Distance(jugador.position, puerta.position) <= distanciaLlegadaFinal)
         {
-            if (baldosa == null || baldosa.EstaRespondida) continue;
-
-            float distancia = Vector3.Distance(jugador.position, baldosa.transform.position);
-            if (distancia < distanciaMinima)
-            {
-                distanciaMinima = distancia;
-                masCercanaSinResponder = baldosa;
-            }
+            yaLlegoADestino = true;
+            return null;
         }
 
-        if (masCercanaSinResponder != null) return masCercanaSinResponder.transform;
-
-        if (GameManager.Instance != null && GameManager.Instance.puertaFinalOficina != null)
-            return GameManager.Instance.puertaFinalOficina.transform;
-
-        return null;
+        return puerta;
     }
 }

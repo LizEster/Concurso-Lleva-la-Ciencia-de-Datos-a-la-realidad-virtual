@@ -7100,29 +7100,6 @@ MonoBehaviour:
   construirCuerpoAutomatico: 1
   materialCuerpo: {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
   colorLuz: {r: 0, g: 1, b: 1, a: 1}
---- !u!114 &1792959879
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1792959873}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 63409dcb47654b7485bfbe8579c4cffe, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NubeDialogoBot
-  textoInicial: Sigue la línea del suelo.
-  visibleAlInicio: 1
-  objetivoAlQueMira: {fileID: 0}
-  alturaSobreElBot: 1.25
-  escala: 0.0035
-  colorFondo: {r: 0.03, g: 0.07, b: 0.11, a: 0.88}
-  colorBorde: {r: 0, g: 1, b: 1, a: 1}
-  colorTexto: {r: 0.85, g: 0.98, b: 1, a: 1}
-  tamanoFuente: 30
-  anchoMaximo: 330
-  duracionFundido: 0.2
 --- !u!135 &1792959875
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -7216,6 +7193,29 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1792959879
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1792959873}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63409dcb47654b7485bfbe8579c4cffe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NubeDialogoBot
+  textoInicial: "Sigue la l\xEDnea del suelo."
+  visibleAlInicio: 1
+  objetivoAlQueMira: {fileID: 0}
+  alturaSobreElBot: 1.25
+  escala: 0.0035
+  colorFondo: {r: 0.03, g: 0.07, b: 0.11, a: 0.88}
+  colorBorde: {r: 0, g: 1, b: 1, a: 1}
+  colorTexto: {r: 0.85, g: 0.98, b: 1, a: 1}
+  tamanoFuente: 30
+  anchoMaximo: 330
+  duracionFundido: 0.2
 --- !u!1 &1798187101
 GameObject:
   m_ObjectHideFlags: 0
@@ -8488,6 +8488,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a4c18952442944083b1fddc06ba477c2, type: 3}
+--- !u!1 &2041251414 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7443583007097417289, guid: b52c268893c724eabb2b2d9d5456b18c, type: 3}
+  m_PrefabInstance: {fileID: 674031927}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2043898961
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8710,7 +8715,7 @@ MonoBehaviour:
   uiManager: {fileID: 830687498}
   nivelAgua: {fileID: 2066303128}
   sueloTunelFucsia: {fileID: 1798187101}
-  puertaFinalOficina: {fileID: 0}
+  puertaFinalOficina: {fileID: 2041251414}
 --- !u!114 &2066303127
 MonoBehaviour:
   m_ObjectHideFlags: 0
