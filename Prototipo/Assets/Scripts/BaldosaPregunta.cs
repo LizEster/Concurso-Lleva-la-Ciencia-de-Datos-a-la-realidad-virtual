@@ -1,20 +1,37 @@
+using System.Collections;
 using UnityEngine;
 
 public class BaldosaPregunta : MonoBehaviour
 {
-    public enum NumeroDePiso { Piso1_Rey, Piso2_Paris, Piso3_Medico }
-    
-    [Header("Configuración del Nodo")]
-    public NumeroDePiso elegirPregunta;
-
     [Header("Ajuste de Detección")]
     public float distanciaDeActivacion = 2.5f;
 
+    [Header("Emersión del piso")]
+    [Tooltip("Marca esto SOLO en el Piso 1: la plataforma inicial, que ya está en su sitio desde el arranque y nunca se hunde.")]
+    public bool esPisoInicial = false;
+    [Tooltip("Cuánto se hunde el piso bajo su posición final mientras espera en el vacío, antes de emerger")]
+    public float profundidadEmersion = 4f;
+    [Tooltip("Cuánto tarda en subir desde el vacío hasta su posición final, en segundos")]
+    public float duracionEmersion = 1.2f;
+    [Tooltip("La baldosa que debe emerger cuando ÉSTA se responde (arrástrala desde la Jerarquía). Déjalo vacío en la última baldosa.")]
+    public BaldosaPregunta siguienteBaldosa;
+
+    [Header("Colapso del piso (una vez que ya avanzaste)")]
+    [Tooltip("Segundos que espera este piso, después de responder SU pregunta, antes de empezar a colapsar. Dale tiempo suficiente para cruzar al siguiente.")]
+    public float tiempoAntesDeColapsar = 4f;
+    [Tooltip("Cuánto tarda en hundirse una vez que empieza a colapsar, en segundos")]
+    public float duracionColapso = 0.8f;
+    [Tooltip("Cuánto se hunde el piso al colapsar, antes de desaparecer del todo")]
+    public float profundidadColapso = 10f;
+
+    // La pregunta de esta baldosa se saca al azar del banco compartido (BancoPreguntas) en
+    // Start(): ya no se elige a mano por piso, así cada partida toca una combinación distinta
+    // y sin repetir entre los 5 pisos.
     private string enunciadoPregunta;
-    private string[] textoOpciones = new string[3];
-    private float[] costoRefri = new float[3];
-    private float[] costoAgua = new float[3];
-    private string[] mensajeResultado = new string[3];
+    private string[] textoOpciones;
+    private float[] costoRefri;
+    private float[] costoAgua;
+    private string[] mensajeResultado;
     private int indiceCorrecta = -1;
 
     private bool jugadorEncima = false;
@@ -23,87 +40,63 @@ public class BaldosaPregunta : MonoBehaviour
     private GameObject playerObjeto;
     private MonoBehaviour scriptMovimientoPlayer;
 
+    private Collider colisionadorPropio;
+    private Renderer[] renderersPropios;
+    private Vector3 posicionFinal;
+    private bool yaEmergida;
+
     void Start()
     {
-        ConfigurarPreguntaAutomatica();
+        AsignarPreguntaDelBanco();
         playerObjeto = GameObject.FindGameObjectWithTag("Player");
 
         MeshCollider col = GetComponent<MeshCollider>();
         if (col != null) col.isTrigger = false;
+
+        colisionadorPropio = GetComponent<Collider>();
+        renderersPropios = GetComponentsInChildren<Renderer>();
+        posicionFinal = transform.position;
+
+        if (esPisoInicial)
+        {
+            // El Piso 1 ya está formado desde el arranque: no se hunde ni espera a emerger.
+            yaEmergida = true;
+        }
+        else
+        {
+            // Empieza hundida en el vacío: invisible y sin colisión hasta que le toque emerger.
+            yaEmergida = false;
+            transform.position = posicionFinal - Vector3.up * profundidadEmersion;
+            SetVisible(false);
+            if (colisionadorPropio != null) colisionadorPropio.enabled = false;
+        }
     }
 
-    private void ConfigurarPreguntaAutomatica()
+    private void AsignarPreguntaDelBanco()
     {
-        // BALANCE DE DAÑO SINFÓNICO: 
-        // Las opciones correctas consumen un sutil 5%.
-        // Las respuestas incorrectas castigan con un masivo 45% o 50% de refrigeración.
-        // Esto garantiza que 2 errores seguidos o combinados destruyan el suelo por completo (0%).
+        PreguntaVectorial datos = BancoPreguntas.SacarSiguiente();
 
-        switch (elegirPregunta)
-        {
-            case NumeroDePiso.Piso1_Rey:
-                enunciadoPregunta = "Un panel holográfico se enciende frente al precipicio mostrando una ecuación de vectores incompleta:\n\nRey - Hombre + Mujer ≈ [¿?]";
-                
-                textoOpciones[0] = "Princesa"; 
-                costoRefri[0] = 45f; costoAgua[0] = 1.5f; // Castigo alto
-                mensajeResultado[0] = "> Error de coherencia vectorial. El datacenter disipa calor crítico.";
-
-                textoOpciones[1] = "Reina"; // Correcta
-                indiceCorrecta = 1;
-                costoRefri[1] = 5f; costoAgua[1] = 0.15f; 
-                mensajeResultado[1] = "> Procesamiento eficiente. El puente de luz se forma en verde brillante.";
-
-                textoOpciones[2] = "Castillo"; 
-                costoRefri[2] = 50f; costoAgua[2] = 2.0f; // Castigo crítico (Mitad de la barra)
-                mensajeResultado[2] = "> Error grave de coherencia. Los sistemas de enfriamiento entran en alerta.";
-                break;
-
-            case NumeroDePiso.Piso2_Paris:
-                enunciadoPregunta = "El panel holográfico se mantiene activo mostrando una nueva relación semántica:\n\nParís - Francia + Italia ≈ [¿?]";
-                
-                textoOpciones[0] = "Roma"; // Correcta
-                indiceCorrecta = 0;
-                costoRefri[0] = 5f; costoAgua[0] = 0.15f; 
-                mensajeResultado[0] = "> Procesamiento eficiente. Las conexiones vectoriales se estabilizan.";
-
-                textoOpciones[1] = "Venecia"; 
-                costoRefri[1] = 45f; costoAgua[1] = 1.5f; 
-                mensajeResultado[1] = "> Error de coherencia vectorial. Evaporación de agua acelerada en las celdas fucsias.";
-
-                textoOpciones[2] = "Europa"; 
-                costoRefri[2] = 50f; costoAgua[2] = 2.0f; 
-                mensajeResultado[2] = "> Error de coherencia. La sobrecarga térmica reduce drásticamente las reservas.";
-                break;
-
-            case NumeroDePiso.Piso3_Medico:
-                enunciadoPregunta = "Último cruce vectorial antes de la salida del túnel. Resuelve la incógnita:\n\nMédico - Hospital + Colegio ≈ [¿?]";
-                
-                textoOpciones[0] = "Alumno"; 
-                costoRefri[0] = 50f; costoAgua[0] = 2.0f; 
-                mensajeResultado[0] = "> Error de coherencia. Inestabilidad computacional crítica en el último tramo.";
-
-                textoOpciones[1] = "Pizarra"; 
-                costoRefri[1] = 45f; costoAgua[1] = 1.5f; 
-                mensajeResultado[1] = "> Error de coherencia. Los ventiladores no logran mitigar el impacto térmico.";
-
-                textoOpciones[2] = "Profesor"; // Correcta
-                indiceCorrecta = 2;
-                costoRefri[2] = 5f; costoAgua[2] = 0.15f; 
-                mensajeResultado[2] = "> OUTPUT GENERADO. La gran compuerta del final se ilumina.";
-                break;
-        }
+        enunciadoPregunta = datos.enunciado;
+        textoOpciones = datos.textoOpciones;
+        indiceCorrecta = datos.indiceCorrecta;
+        costoRefri = datos.costoRefri;
+        costoAgua = datos.costoAgua;
+        mensajeResultado = datos.mensajeResultado;
     }
 
     void Update()
     {
-        if (respondida || playerObjeto == null) return;
+        // Mientras siga hundida en el vacío (todavía no le toca emerger) no puede detectar
+        // al jugador ni mostrar su pregunta: físicamente no está ahí todavía.
+        if (respondida || playerObjeto == null || !yaEmergida) return;
 
         float distancia = Vector3.Distance(transform.position, playerObjeto.transform.position);
 
         if (distancia <= distanciaDeActivacion && !jugadorEncima)
         {
             jugadorEncima = true;
-            CongelarJugador(true);
+            // Ya no se congela al jugador al abrir la pregunta: puede seguir caminando
+            // (y por lo tanto arriesgarse a caer si el piso de atrás ya colapsó) mientras decide.
             DesplegarPreguntaEnUI();
         }
     }
@@ -153,6 +146,12 @@ public class BaldosaPregunta : MonoBehaviour
         }
 
         CongelarJugador(false);
+
+        // El camino sigue formándose independientemente de si se acertó o no: lo único que
+        // cambia con el acierto es el costo de refrigeración/agua, nunca si puedes avanzar.
+        EmergerSiguiente();
+        ProgramarPropioColapso();
+        AvisarSiEsLaUltima();
     }
 
     private void EvaluarRespuesta(int indiceOpcion)
@@ -173,6 +172,110 @@ public class BaldosaPregunta : MonoBehaviour
 
         // Te libera sí o sí para que sigas caminando, sin importar si te equivocaste o no
         CongelarJugador(false);
+
+        // Igual que arriba: la siguiente baldosa emerge sí o sí, acertar solo abarata el costo.
+        EmergerSiguiente();
+        ProgramarPropioColapso();
+        AvisarSiEsLaUltima();
+    }
+
+    /// <summary>
+    /// Si esta baldosa es la última del camino (no tiene "siguienteBaldosa" asignada), avisa
+    /// al GameManager apenas se responde su pregunta: es la señal real de "llegaste a la
+    /// salida", en vez de contar cuántas respuestas fueron correctas.
+    /// </summary>
+    private void AvisarSiEsLaUltima()
+    {
+        if (siguienteBaldosa == null && GameManager.Instance != null)
+        {
+            GameManager.Instance.TerminarNivelConExito();
+        }
+    }
+
+    private void EmergerSiguiente()
+    {
+        if (siguienteBaldosa != null)
+        {
+            siguienteBaldosa.Emerger();
+        }
+    }
+
+    /// <summary>
+    /// Hace que esta baldosa suba desde el vacío hasta su posición final. La llama la baldosa
+    /// anterior en cuanto el jugador responde (bien o mal), para que el camino se vaya
+    /// formando a medida que se avanza.
+    /// </summary>
+    public void Emerger()
+    {
+        if (yaEmergida) return;
+        yaEmergida = true;
+
+        SetVisible(true);
+        StopCoroutine(nameof(CorutinaEmerger));
+        StartCoroutine(CorutinaEmerger());
+    }
+
+    private IEnumerator CorutinaEmerger()
+    {
+        Vector3 posicionInicial = transform.position;
+        float tiempoTranscurrido = 0f;
+
+        while (tiempoTranscurrido < duracionEmersion)
+        {
+            tiempoTranscurrido += Time.deltaTime;
+            float t = Mathf.SmoothStep(0f, 1f, tiempoTranscurrido / duracionEmersion);
+            transform.position = Vector3.Lerp(posicionInicial, posicionFinal, t);
+            yield return null;
+        }
+
+        transform.position = posicionFinal;
+
+        // La colisión se habilita recién al llegar arriba: mientras sube, todavía no se puede
+        // pisar (si se habilitara antes, el jugador podría "montarse" a mitad de la subida).
+        if (colisionadorPropio != null) colisionadorPropio.enabled = true;
+    }
+
+    /// <summary>
+    /// Programa que ESTA baldosa colapse un rato después de haber sido respondida: así el
+    /// camino no queda "congelado" para siempre detrás tuyo, y si te demoras demasiado en
+    /// avanzar, el piso puede desaparecer bajo tus pies.
+    /// </summary>
+    private void ProgramarPropioColapso()
+    {
+        StartCoroutine(CorutinaEsperarYColapsar());
+    }
+
+    private IEnumerator CorutinaEsperarYColapsar()
+    {
+        yield return new WaitForSeconds(tiempoAntesDeColapsar);
+
+        // Se apaga la colisión de entrada: si alguien sigue parado encima, empieza a caer de
+        // verdad junto con el piso, en vez de quedar flotando sobre un colisionador fantasma.
+        if (colisionadorPropio != null) colisionadorPropio.enabled = false;
+
+        Vector3 posicionInicial = transform.position;
+        Vector3 posicionDestino = posicionInicial - Vector3.up * profundidadColapso;
+        float tiempoTranscurrido = 0f;
+
+        while (tiempoTranscurrido < duracionColapso)
+        {
+            tiempoTranscurrido += Time.deltaTime;
+            float t = tiempoTranscurrido / duracionColapso;
+            transform.position = Vector3.Lerp(posicionInicial, posicionDestino, t);
+            yield return null;
+        }
+
+        transform.position = posicionDestino;
+        SetVisible(false);
+    }
+
+    private void SetVisible(bool visible)
+    {
+        if (renderersPropios == null) return;
+        foreach (Renderer r in renderersPropios)
+        {
+            if (r != null) r.enabled = visible;
+        }
     }
 
     private void CongelarJugador(bool congelar)

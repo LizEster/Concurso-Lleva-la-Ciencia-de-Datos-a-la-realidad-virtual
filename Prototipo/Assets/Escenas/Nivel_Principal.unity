@@ -224,7 +224,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 1798187102}
+    m_TransformParent: {fileID: 57869709}
     m_Modifications:
     - target: {fileID: 100000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_Name
@@ -236,15 +236,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.4516401
+      value: -23.554558
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -32.5
+      value: -5.1911697
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -44.72287
+      value: 31.526497
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -292,6 +292,42 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 441432, guid: 4d57a31eab232457da9acbcc32af22cf, type: 3}
   m_PrefabInstance: {fileID: 1503671631}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &57869708
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 57869709}
+  m_Layer: 0
+  m_Name: Estructura_tunel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &57869709
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 57869708}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 25.006199, y: -27.30883, z: -76.24937}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 712376474}
+  - {fileID: 854043685}
+  - {fileID: 1013533367}
+  - {fileID: 16755594}
+  - {fileID: 1240118335}
+  m_Father: {fileID: 1798187102}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &58588093
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -538,6 +574,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Piso 2
       objectReference: {fileID: 0}
+    - target: {fileID: 3699100878489879238, guid: 2878502761c3c4cd185aa9849b4fdb45, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -605,6 +645,10 @@ PrefabInstance:
     - target: {fileID: 3699100878489879238, guid: 2878502761c3c4cd185aa9849b4fdb45, type: 3}
       propertyPath: m_Name
       value: Piso 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3699100878489879238, guid: 2878502761c3c4cd185aa9849b4fdb45, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1960,8 +2004,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9189ea8979ca34c119fe1ecce93c9f4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BaldosaPregunta
-  elegirPregunta: 1
   distanciaDeActivacion: 1.3
+  esPisoInicial: 0
+  profundidadEmersion: 4
+  duracionEmersion: 1.3
+  siguienteBaldosa: {fileID: 603515213}
+  tiempoAntesDeColapsar: 4
+  duracionColapso: 0.8
+  profundidadColapso: 10
 --- !u!1001 &453611579
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2262,7 +2312,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 1798187102}
+    m_TransformParent: {fileID: 57869709}
     m_Modifications:
     - target: {fileID: 100000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_Name
@@ -2274,15 +2324,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.4516401
+      value: -23.554558
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -32.5
+      value: -5.1911697
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -47.55287
+      value: 28.696495
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2606,8 +2656,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9189ea8979ca34c119fe1ecce93c9f4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BaldosaPregunta
-  elegirPregunta: 2
   distanciaDeActivacion: 1.3
+  esPisoInicial: 0
+  profundidadEmersion: 4
+  duracionEmersion: 1.3
+  siguienteBaldosa: {fileID: 603515213}
+  tiempoAntesDeColapsar: 4
+  duracionColapso: 0.8
+  profundidadColapso: 10
 --- !u!4 &604520135 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 416390, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
@@ -4286,8 +4342,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9189ea8979ca34c119fe1ecce93c9f4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BaldosaPregunta
-  elegirPregunta: 2
   distanciaDeActivacion: 1.3
+  esPisoInicial: 0
+  profundidadEmersion: 4
+  duracionEmersion: 1.2
+  siguienteBaldosa: {fileID: 0}
+  tiempoAntesDeColapsar: 4
+  duracionColapso: 0.8
+  profundidadColapso: 10
 --- !u!4 &973403488 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 450040, guid: 530f5ce44fdac4197a29f5bec8818d85, type: 3}
@@ -5594,7 +5656,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 1798187102}
+    m_TransformParent: {fileID: 57869709}
     m_Modifications:
     - target: {fileID: 100000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_Name
@@ -5606,15 +5668,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.4516401
+      value: -23.554558
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -32.5
+      value: -5.1911697
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -53.39287
+      value: 22.856495
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -5926,6 +5988,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Piso 5
       objectReference: {fileID: 0}
+    - target: {fileID: 3699100878489879238, guid: 2878502761c3c4cd185aa9849b4fdb45, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -6108,6 +6174,10 @@ PrefabInstance:
     - target: {fileID: 3699100878489879238, guid: 2878502761c3c4cd185aa9849b4fdb45, type: 3}
       propertyPath: m_Name
       value: Piso 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 3699100878489879238, guid: 2878502761c3c4cd185aa9849b4fdb45, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -6380,8 +6450,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9189ea8979ca34c119fe1ecce93c9f4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BaldosaPregunta
-  elegirPregunta: 1
   distanciaDeActivacion: 1.3
+  esPisoInicial: 0
+  profundidadEmersion: 4
+  duracionEmersion: 1.3
+  siguienteBaldosa: {fileID: 442997277}
+  tiempoAntesDeColapsar: 4
+  duracionColapso: 1
+  profundidadColapso: 10
 --- !u!1001 &1363097885
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7653,8 +7729,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9189ea8979ca34c119fe1ecce93c9f4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BaldosaPregunta
-  elegirPregunta: 0
   distanciaDeActivacion: 1.3
+  esPisoInicial: 1
+  profundidadEmersion: 4
+  duracionEmersion: 2
+  siguienteBaldosa: {fileID: 1356328836}
+  tiempoAntesDeColapsar: 4
+  duracionColapso: 0.8
+  profundidadColapso: 10
 --- !u!1001 &1611946597
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9017,16 +9099,12 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 854043685}
-  - {fileID: 1013533367}
-  - {fileID: 712376474}
-  - {fileID: 16755594}
-  - {fileID: 1240118335}
   - {fileID: 1596048716}
   - {fileID: 1356328834}
   - {fileID: 442997275}
   - {fileID: 603515211}
   - {fileID: 955703784}
+  - {fileID: 57869709}
   m_Father: {fileID: 1258595354}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1800196340 stripped
@@ -9474,7 +9552,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 1798187102}
+    m_TransformParent: {fileID: 57869709}
     m_Modifications:
     - target: {fileID: 100000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_Name
@@ -9486,15 +9564,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.4516401
+      value: -23.554558
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -32.5
+      value: -5.1911697
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -50.452873
+      value: 25.796494
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -10434,7 +10512,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 1798187102}
+    m_TransformParent: {fileID: 57869709}
     m_Modifications:
     - target: {fileID: 100000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_Name
@@ -10446,15 +10524,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.4516401
+      value: -23.554558
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -32.5
+      value: -5.1911697
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -41.90287
+      value: 34.346497
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: ee907665968ec434b88759a90902212e, type: 3}
       propertyPath: m_LocalRotation.w
