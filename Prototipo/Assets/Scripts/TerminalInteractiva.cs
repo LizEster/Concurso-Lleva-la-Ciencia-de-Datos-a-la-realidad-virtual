@@ -5,8 +5,10 @@ using TMPro;
 
 /// <summary>
 /// Terminal interactuable (el modelo con animación que se repite, importado de Sketchfab).
-/// El aviso "[E] Abrir" / "[E] Cerrar" está siempre visible sobre la terminal (no
-/// depende de la cercanía, sólo la interacción sí). La PRIMERA vez que se presiona E
+/// El aviso "[E] Abrir" / "[E] Cerrar" permanece OCULTO y sin función hasta que el
+/// jugador termina todo el diálogo del robot y elige "Preparada/o." (ver
+/// ControladorActo1.DialogoTerminado). A partir de ahí queda siempre visible sobre la
+/// terminal (no depende de la cercanía, sólo la interacción sí). La PRIMERA vez que se presiona E
 /// estando cerca: se reproduce la animación de la terminal (que deja de repetirse
 /// sola) -> aparece un panel pidiendo las iniciales -> al confirmarlas se muestra
 /// "Abriendo puerta..." y se abre la puerta (en vertical, con PuertaDataCenter). Las
@@ -14,6 +16,10 @@ using TMPro;
 /// </summary>
 public class TerminalInteractiva : MonoBehaviour
 {
+    [Header("Referencias de la Escena")]
+    [Tooltip("El controlador del diálogo del robot (Acto 1). Mientras el jugador no termine TODO el diálogo y elija 'Preparada/o.', el aviso [E] Abrir se queda oculto y la tecla no hace nada. Si se deja vacío, la terminal funciona siempre (sin esperar diálogo).")]
+    public ControladorActo1 controladorActo1;
+
     [Header("Detección de cercanía")]
     [Tooltip("Distancia máxima a la que el jugador tiene que estar de la terminal para poder interactuar (abrir/cerrar). El aviso [E] se ve siempre; esto sólo controla cuándo funciona la tecla.")]
     public float distanciaDeActivacion = 2.5f;
@@ -95,6 +101,13 @@ public class TerminalInteractiva : MonoBehaviour
     {
         jugador = GameObject.FindGameObjectWithTag("Player")?.transform;
 
+        // Si no arrastraste el ControladorActo1 a mano en el Inspector, lo buscamos solos
+        // en la escena: así el bloqueo del diálogo funciona igual aunque se te olvide conectarlo.
+        if (controladorActo1 == null)
+        {
+            controladorActo1 = FindFirstObjectByType<ControladorActo1>();
+        }
+
         CrearAvisoFlotante();
 
         // La animación importada, reproducida hacia adelante, muestra la terminal
@@ -123,6 +136,16 @@ public class TerminalInteractiva : MonoBehaviour
             }
             return;
         }
+
+        if (!DialogoListo())
+        {
+            // Todavía no terminaste de hablar con el robot (o no elegiste "Preparada/o."):
+            // el aviso [E] Abrir se mantiene oculto y la tecla no hace nada.
+            if (avisoGO != null && avisoGO.activeSelf) avisoGO.SetActive(false);
+            return;
+        }
+
+        if (avisoGO != null && !avisoGO.activeSelf) avisoGO.SetActive(true);
 
         if (procesando) return;
 
@@ -177,6 +200,14 @@ public class TerminalInteractiva : MonoBehaviour
         etiquetaAviso.text = puertaAbierta ? textoAvisoCerrar : textoAvisoAbrir;
     }
 
+    /// <summary>True cuando ya se puede mostrar/usar el aviso [E] Abrir: o no hay
+    /// controlador de diálogo asignado, o el jugador ya terminó todo el diálogo y
+    /// eligió "Preparada/o.".</summary>
+    private bool DialogoListo()
+    {
+        return controladorActo1 == null || controladorActo1.DialogoTerminado;
+    }
+
     private void ActualizarCercania()
     {
         if (jugador == null)
@@ -222,7 +253,7 @@ public class TerminalInteractiva : MonoBehaviour
 
         avisoGO = textoGO;
         ActualizarPosicionAviso();
-        avisoGO.SetActive(true); // siempre visible, ya no depende de la cercanía
+        avisoGO.SetActive(DialogoListo()); // oculto hasta terminar el diálogo del robot
     }
 
     private void ActualizarPosicionAviso()
