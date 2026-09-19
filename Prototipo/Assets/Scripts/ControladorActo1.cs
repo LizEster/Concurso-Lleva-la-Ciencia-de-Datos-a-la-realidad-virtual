@@ -1,6 +1,4 @@
 using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 public class ControladorActo1 : MonoBehaviour
@@ -31,15 +29,6 @@ public class ControladorActo1 : MonoBehaviour
     [Header("Cierre del diálogo")]
     [TextArea(1, 2)]
     public string textoFinalTrasDialogo = "Sígueme...";
-
-    [Header("Botón: Saltar diálogo")]
-    [Tooltip("Si está marcado, aparece un botón en pantalla que salta todo el diálogo del robot de una sola vez.")]
-    public bool mostrarBotonSaltar = true;
-    [Tooltip("Texto que se muestra dentro del botón.")]
-    public string textoBotonSaltar = "Saltar diálogo »";
-    public Color colorFondoBotonSaltar = new Color(1f, 1f, 1f, 0.15f);
-    public Color colorTextoBotonSaltar = Color.white;
-    public int tamanoFuenteBotonSaltar = 22;
 
     // ------------------------------------------------------------------
     // GUION DEL ROBOT: cada nodo es una línea que dice el robot, mostrada
@@ -102,108 +91,13 @@ public class ControladorActo1 : MonoBehaviour
     private bool esperandoOpcion = false;
     private bool introEnCurso = true;
     private bool dialogoTerminado = false;
-    private GameObject botonSaltarGO;
 
     void Start()
     {
         // La barrera bloquea desde el minuto uno, hasta que se elija "Preparada/o.".
         if (barreraSalida != null) barreraSalida.SetActive(true);
 
-        if (mostrarBotonSaltar)
-        {
-            CrearBotonSaltar();
-        }
-
-        // Mientras dura el diálogo el jugador no necesita mirar alrededor: liberamos el
-        // cursor para que pueda hacer clic en "Saltar diálogo". Se vuelve a bloquear en
-        // cuanto el diálogo termina, ya sea normal o saltado (ver LiberarSalida()).
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-
         StartCoroutine(SecuenciaCompleta());
-    }
-
-    /// <summary>
-    /// Crea, colgado del mismo Canvas que usa UIManager, un botón que al presionarlo
-    /// (una sola vez) se destruye y salta TODO el diálogo del robot de golpe.
-    /// </summary>
-    private void CrearBotonSaltar()
-    {
-        RectTransform lienzo = uiManager != null ? uiManager.canvasRectTransform : null;
-        if (lienzo == null)
-        {
-            Debug.LogWarning("ControladorActo1: falta asignar 'Canvas Rect Transform' en el UIManager para poder crear el botón de saltar diálogo.");
-            return;
-        }
-
-        GameObject botonGO = new GameObject("BotonSaltarDialogo");
-        botonGO.transform.SetParent(lienzo, false);
-
-        RectTransform rectBoton = botonGO.AddComponent<RectTransform>();
-        rectBoton.anchorMin = new Vector2(1f, 1f);
-        rectBoton.anchorMax = new Vector2(1f, 1f);
-        rectBoton.pivot = new Vector2(1f, 1f);
-        rectBoton.anchoredPosition = new Vector2(-24f, -24f);
-        rectBoton.sizeDelta = new Vector2(240f, 56f);
-
-        Image fondoBoton = botonGO.AddComponent<Image>();
-        fondoBoton.color = colorFondoBotonSaltar;
-
-        Button boton = botonGO.AddComponent<Button>();
-        boton.targetGraphic = fondoBoton;
-        boton.onClick.AddListener(SaltarDialogo);
-
-        GameObject textoGO = new GameObject("Texto");
-        textoGO.transform.SetParent(botonGO.transform, false);
-        RectTransform rectTexto = textoGO.AddComponent<RectTransform>();
-        rectTexto.anchorMin = Vector2.zero;
-        rectTexto.anchorMax = Vector2.one;
-        rectTexto.offsetMin = Vector2.zero;
-        rectTexto.offsetMax = Vector2.zero;
-
-        TextMeshProUGUI etiquetaBoton = textoGO.AddComponent<TextMeshProUGUI>();
-        etiquetaBoton.text = textoBotonSaltar;
-        etiquetaBoton.fontSize = tamanoFuenteBotonSaltar;
-        etiquetaBoton.color = colorTextoBotonSaltar;
-        etiquetaBoton.alignment = TextAlignmentOptions.Center;
-
-        botonSaltarGO = botonGO;
-    }
-
-    /// <summary>
-    /// Se llama al presionar el botón "Saltar diálogo". Corta cualquier corrutina de
-    /// diálogo en curso (texto inicial, escritura letra por letra, etc.), limpia toda
-    /// la UI del diálogo y deja el nivel exactamente como si el jugador hubiese
-    /// terminado la conversación por las buenas.
-    /// </summary>
-    public void SaltarDialogo()
-    {
-        if (dialogoTerminado) return;
-
-        StopAllCoroutines();
-
-        introEnCurso = false;
-        esperandoOpcion = false;
-        dialogoTerminado = true;
-
-        if (uiManager != null)
-        {
-            uiManager.MostrarOpciones("");
-            uiManager.MostrarMensajeTerminal("");
-        }
-
-        if (NubeDialogoBot.Instancia != null)
-        {
-            NubeDialogoBot.Instancia.Ocultar();
-        }
-
-        if (botonSaltarGO != null)
-        {
-            Destroy(botonSaltarGO);
-            botonSaltarGO = null;
-        }
-
-        LiberarSalida();
     }
 
     private IEnumerator SecuenciaCompleta()
@@ -365,26 +259,10 @@ public class ControladorActo1 : MonoBehaviour
             uiManager.MostrarOpciones(""); // ya no hay nada que elegir
         }
 
-        if (botonSaltarGO != null)
-        {
-            Destroy(botonSaltarGO);
-            botonSaltarGO = null;
-        }
-
         // El robot dice su última frase (con bip, igual que las demás) y el jugador queda
         // libre para avanzar.
         StartCoroutine(EscribirEnNube(textoFinalTrasDialogo, null));
 
-        LiberarSalida();
-    }
-
-    /// <summary>
-    /// Acciones de "fin del diálogo": cura al robot, quita la barrera de salida, abre la
-    /// puerta y vuelve a bloquear el cursor para que el jugador retome el control normal
-    /// de la cámara (MouseLook). La usan tanto el final normal del diálogo como saltarlo.
-    /// </summary>
-    private void LiberarSalida()
-    {
         if (botGuia != null)
         {
             botGuia.Curarse();
@@ -399,8 +277,5 @@ public class ControladorActo1 : MonoBehaviour
         {
             puertaInicio.AbrirPuerta();
         }
-
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
     }
 }

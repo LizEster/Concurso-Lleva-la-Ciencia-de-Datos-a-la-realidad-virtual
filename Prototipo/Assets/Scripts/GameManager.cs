@@ -10,6 +10,10 @@ public class GameManager : MonoBehaviour
     public float aguaConsumidaLitros = 0f;
     private bool juegoTerminado = false;
 
+    [Header("Iniciales del jugador")]
+    [Tooltip("Iniciales que el jugador escribió en el panel de la terminal (TerminalInteractiva). Se guardan aquí para poder usarlas después, por ejemplo cuando el robot desea suerte al llegar al Piso 1.")]
+    public string inicialesJugador = "";
+
     [Header("Referencias de UI")]
     public UIManager uiManager;
     public NivelAgua nivelAgua;
