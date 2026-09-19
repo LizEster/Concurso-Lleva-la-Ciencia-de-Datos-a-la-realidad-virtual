@@ -33,6 +33,11 @@ public class BotGuia : MonoBehaviour
     public Material materialCuerpo;
     public Color colorLuz = new Color(0f, 1f, 1f, 1f);
 
+    [Header("Estado de salud")]
+    [Tooltip("Empieza con la luz roja (enfermo). Se cura llamando a Curarse().")]
+    public bool estaEnfermo = true;
+    public Color colorLuzEnfermo = new Color(1f, 0.15f, 0.1f, 1f);
+
     private readonly List<Vector3> rutaPropia = new List<Vector3>();
     private BaldosaPregunta[] baldosas;
     private float tiempoDesdeUltimoCalculo;
@@ -45,6 +50,8 @@ public class BotGuia : MonoBehaviour
     private Transform brazoIzquierdo;
     private Transform brazoDerecho;
     private Transform cuerpo;
+
+    private Material materialLuzInstancia;
 
     void Start()
     {
@@ -70,6 +77,8 @@ public class BotGuia : MonoBehaviour
         if (jugador != null) NavegacionSuelo.Instancia.RegistrarIgnorado(jugador.gameObject);
 
         if (construirCuerpoAutomatico) ConstruirCuerpo();
+
+        if (estaEnfermo) AplicarColorEnfermo();
 
         ColocarJuntoAlJugador();
 
@@ -104,6 +113,7 @@ public class BotGuia : MonoBehaviour
         }
 
         Material materialLuz = CrearMaterialEmisivo(colorLuz);
+        materialLuzInstancia = materialLuz; // guardamos la referencia para poder ponerla roja/curarla
 
         // Proporciones en fracción de la altura total, medidas desde los pies.
         float largoPierna = altura * 0.38f;
@@ -379,5 +389,30 @@ public class BotGuia : MonoBehaviour
             return GameManager.Instance.puertaFinalOficina.transform;
 
         return null;
+    }
+
+    // ------------------------------------------------------------------
+    // ESTADO DE SALUD: luz roja mientras 'estaEnfermo', y vuelta al color
+    // normal (colorLuz) al llamar a Curarse().
+    // ------------------------------------------------------------------
+
+    private void AplicarColorEnfermo()
+    {
+        if (materialLuzInstancia == null) return;
+        Color c = colorLuzEnfermo;
+        if (materialLuzInstancia.HasProperty("_EmissionColor")) materialLuzInstancia.SetColor("_EmissionColor", c * 3f);
+        materialLuzInstancia.color = c;
+    }
+
+    /// <summary>Llamar cuando termina el diálogo inicial: el robot se estabiliza (luz vuelve a la normal).</summary>
+    public void Curarse()
+    {
+        if (!estaEnfermo) return;
+        estaEnfermo = false;
+
+        if (materialLuzInstancia == null) return;
+        Color c = colorLuz;
+        if (materialLuzInstancia.HasProperty("_EmissionColor")) materialLuzInstancia.SetColor("_EmissionColor", c * 3f);
+        materialLuzInstancia.color = c;
     }
 }
