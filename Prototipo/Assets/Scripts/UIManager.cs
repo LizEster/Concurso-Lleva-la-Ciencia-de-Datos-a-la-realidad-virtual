@@ -51,8 +51,13 @@ public class UIManager : MonoBehaviour
             textoMétricas.gameObject.SetActive(false);
         }
 
-        // Mensaje inicial del juego en la terminal con el nuevo efecto dinámico
-        MostrarMensajeTerminal("Salón principal de Ciencia de Datos. Elige sobre qué deseas aprender.");
+        // Vaciamos el texto de fábrica ("New Text") del objeto: ControladorActo1 es
+        // quien decide qué se muestra aquí (el texto de "te has perdido", y más
+        // adelante las opciones del jugador), así que aquí no escribimos nada fijo.
+        if (textoTerminal != null)
+        {
+            textoTerminal.text = "";
+        }
     }
 
     // Actualiza el indicador en tiempo real
@@ -73,7 +78,18 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    // NUEVO: Cambia el texto usando la animación letra por letra
+    // NUEVO: muestra las opciones del jugador (fuera de la burbuja del robot) de una,
+    // sin animación letra por letra.
+    public void MostrarOpciones(string texto)
+    {
+        if (textoTerminal != null)
+        {
+            if (corrutinaEscritura != null) StopCoroutine(corrutinaEscritura);
+            textoTerminal.text = texto ?? "";
+        }
+    }
+
+    // Cambia el texto usando la animación letra por letra
     public void MostrarMensajeTerminal(string mensaje)
     {
         if (textoTerminal != null)
@@ -94,16 +110,14 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    // NUEVO: Corrutina que genera la animación y reproduce el sonido por cada carácter
+    // Corrutina que genera la animación y reproduce el sonido por cada carácter
     private IEnumerator EscribirTextoLetraPorLetra(string textoCompleto)
     {
         textoTerminal.text = "";
 
-        // 1. ENCIENDE EL AUDIO AL INICIO: Como el sonido ya es un teclado escribiendo,
-        // lo reproducimos de fondo UNA SOLA VEZ al arrancar la frase.
         if (fuenteAudioTeclado != null && fuenteAudioTeclado.clip != null)
         {
-            fuenteAudioTeclado.volume = 0.25f; // Lo dejamos sutil y de fondo
+            fuenteAudioTeclado.volume = 0.25f;
             fuenteAudioTeclado.Play();
         }
 
@@ -113,8 +127,6 @@ public class UIManager : MonoBehaviour
             yield return new WaitForSeconds(velocidadEscritura);
         }
 
-        // 2. APAGA EL AUDIO AL TERMINAR: En cuanto se termina de escribir la última letra,
-        // silenciamos el teclado ambiental para dar paso al silencio dramático.
         if (fuenteAudioTeclado != null)
         {
             fuenteAudioTeclado.Stop();
