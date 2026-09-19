@@ -16,6 +16,16 @@ public class BaldosaPregunta : MonoBehaviour
     [Tooltip("La baldosa que debe emerger cuando ÉSTA se responde (arrástrala desde la Jerarquía). Déjalo vacío en la última baldosa.")]
     public BaldosaPregunta siguienteBaldosa;
 
+    [Header("Diálogo del robot en el Piso 1")]
+    [Tooltip("Sólo se usa en la baldosa marcada como 'Piso Inicial': lo que dice el robot apenas el jugador la pisa por primera vez. Usa {0} donde quieras que aparezcan las iniciales del jugador.")]
+    [TextArea(1, 2)]
+    public string textoRobotBuenaSuerte = "¡Mucha suerte, {0}!!";
+    [Tooltip("Segundos que se muestra ese aviso del robot.")]
+    public float duracionAvisoRobot = 4f;
+    [Tooltip("Arrastra aquí el mismo AudioSource que usa el bot para su bip de diálogo (sólo hace falta asignarlo en la baldosa marcada como Piso Inicial).")]
+    public AudioSource fuenteAudioBip;
+    public AudioClip clipBip;
+
     [Header("Colapso del piso (una vez que ya avanzaste)")]
     [Tooltip("Segundos que espera este piso, después de responder SU pregunta, antes de empezar a colapsar. Dale tiempo suficiente para cruzar al siguiente.")]
     public float tiempoAntesDeColapsar = 4f;
@@ -35,6 +45,7 @@ public class BaldosaPregunta : MonoBehaviour
     private int indiceCorrecta = -1;
 
     private bool jugadorEncima = false;
+    private bool avisoBienvenidaDicho = false;
     private bool respondida = false;
     public bool EstaRespondida => respondida;
     private GameObject playerObjeto;
@@ -95,6 +106,13 @@ public class BaldosaPregunta : MonoBehaviour
         if (distancia <= distanciaDeActivacion && !jugadorEncima)
         {
             jugadorEncima = true;
+
+            if (esPisoInicial && !avisoBienvenidaDicho)
+            {
+                avisoBienvenidaDicho = true;
+                AvisarBuenaSuerte();
+            }
+
             // Ya no se congela al jugador al abrir la pregunta: puede seguir caminando
             // (y por lo tanto arriesgarse a caer si el piso de atrás ya colapsó) mientras decide.
             DesplegarPreguntaEnUI();
@@ -118,6 +136,33 @@ public class BaldosaPregunta : MonoBehaviour
                     UsarIA();
             }
         }
+    }
+
+    /// <summary>Sólo se llama en el Piso 1: el robot desea suerte usando las iniciales que
+    /// el jugador escribió antes en la terminal (guardadas en GameManager.inicialesJugador).</summary>
+    private void AvisarBuenaSuerte()
+    {
+        if (NubeDialogoBot.Instancia == null) return;
+
+        ReproducirBip();
+
+        string iniciales = (GameManager.Instance != null && !string.IsNullOrEmpty(GameManager.Instance.inicialesJugador))
+            ? GameManager.Instance.inicialesJugador
+            : "";
+
+        string mensaje = string.IsNullOrEmpty(iniciales)
+            ? "¡Mucha suerte!!"
+            : string.Format(textoRobotBuenaSuerte, iniciales);
+
+        NubeDialogoBot.Instancia.Mostrar(mensaje, duracionAvisoRobot);
+    }
+
+    /// <summary>Mismo truco que en ControladorActo1: pitch al azar para que suene "distorsionado".</summary>
+    private void ReproducirBip()
+    {
+        if (fuenteAudioBip == null || clipBip == null) return;
+        fuenteAudioBip.pitch = Random.Range(0.6f, 1.3f);
+        fuenteAudioBip.PlayOneShot(clipBip);
     }
 
     private void DesplegarPreguntaEnUI()
