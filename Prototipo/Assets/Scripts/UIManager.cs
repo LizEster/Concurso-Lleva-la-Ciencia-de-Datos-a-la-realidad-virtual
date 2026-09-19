@@ -150,10 +150,10 @@ public class UIManager : MonoBehaviour
 
         if (exito)
         {
-            textoFinalExplicativo.text = $"> OUTPUT GENERADO CON ÉXITO.\n" +
+            textoFinalExplicativo.text = $"> ¡FELICIDADES! Lograste pensar como una Inteligencia Artificial\n" +
                 $"Estado de refrigeración restante: {refriRestante:0}%\n\n" +
-                $"Incluso siendo eficiente y usando tu propia deducción la mayor parte del tiempo, tu consulta evaporó {aguaTotal:0.2} litros de agua real. " +
-                $"Mantener esta red viva tiene un costo físico inevitable.\n\n" +
+                $"Incluso siendo eficiente y usando tu propia deducción la mayor parte del tiempo, tu consulta evaporó {aguaTotal:0.2} litros de agua. " +
+                $"Mantener el datacenter vivo tiene un costo físico inevitable.\n\n" +
                 $"¿Sabías que entrenar grandes modelos de lenguaje en la vida real evapora cientos de miles de litros de agua?\n\n" +
                 $"La Ciencia de Datos es una herramienta poderosa, pero cada vez que presionas 'Enter', el planeta paga una parte del precio.\n\n" +
                 $"Úsala con conciencia.";
