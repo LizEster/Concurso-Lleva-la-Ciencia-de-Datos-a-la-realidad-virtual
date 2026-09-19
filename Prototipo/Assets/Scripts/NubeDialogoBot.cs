@@ -19,7 +19,7 @@ public class NubeDialogoBot : MonoBehaviour
     [Header("Contenido")]
     [Tooltip("Texto de arranque. Es sólo un marcador: sustitúyelo por el diálogo real")]
     [TextArea(2, 4)]
-    public string textoInicial = "Sigue la línea del suelo.";
+    public string textoInicial = "Aqui estoy!!!!";
     [Tooltip("Si está desmarcado, la nube arranca oculta y sólo aparece al llamar a Mostrar()")]
     public bool visibleAlInicio = true;
 
