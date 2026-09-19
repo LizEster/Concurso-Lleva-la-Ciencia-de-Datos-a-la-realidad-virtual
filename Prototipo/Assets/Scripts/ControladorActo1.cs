@@ -92,6 +92,13 @@ public class ControladorActo1 : MonoBehaviour
     private bool introEnCurso = true;
     private bool dialogoTerminado = false;
 
+    /// <summary>
+    /// True recién cuando el jugador terminó de leer TODO el diálogo del robot y eligió
+    /// "Preparada/o.". Otros scripts (como TerminalInteractiva) lo consultan para no
+    /// activarse antes de tiempo.
+    /// </summary>
+    public bool DialogoTerminado => dialogoTerminado;
+
     void Start()
     {
         // La barrera bloquea desde el minuto uno, hasta que se elija "Preparada/o.".
