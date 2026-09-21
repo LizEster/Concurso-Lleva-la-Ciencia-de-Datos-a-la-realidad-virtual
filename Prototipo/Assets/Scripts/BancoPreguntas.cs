@@ -152,7 +152,7 @@ public static class BancoPreguntas
                 }),
 
             new PreguntaVectorial(
-                "El panel holográfico proyecta una nueva ecuación de vectores incompleta:\n\nNieve - invierno + arena ≈ [¿?]",
+                "Nieve - invierno + arena ≈ [¿?]",
                 new[] { "verano", "mar", "playa" },
                 2,
                 new[] { 45f, 50f, 5f },
@@ -178,7 +178,7 @@ public static class BancoPreguntas
                 }),
 
             new PreguntaVectorial(
-                "El panel holográfico proyecta una nueva ecuación de vectores incompleta:\n\nAbeja - enjambre + lobos ≈ [¿?]",
+                "Abeja - enjambre + lobos ≈ [¿?]",
                 new[] { "bosque", "manada", "luna" },
                 1,
                 new[] { 45f, 5f, 50f },
