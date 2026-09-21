@@ -16,6 +16,10 @@ public class BaldosaPregunta : MonoBehaviour
     [Tooltip("La baldosa que debe emerger cuando ÉSTA se responde (arrástrala desde la Jerarquía). Déjalo vacío en la última baldosa.")]
     public BaldosaPregunta siguienteBaldosa;
 
+    [Header("Panel Holográfico")]
+    [Tooltip("Arrastra aquí el PanelHolografico que cuelga sobre esta baldosa. Si lo dejas vacío, se usa la terminal de texto como respaldo (comportamiento anterior).")]
+    public PanelHolografico panelHolograma;
+
     [Header("Diálogo del robot en el Piso 1")]
     [Tooltip("Sólo se usa en la baldosa marcada como 'Piso Inicial': lo que dice el robot apenas el jugador la pisa por primera vez. Usa {0} donde quieras que aparezcan las iniciales del jugador.")]
     [TextArea(1, 2)]
@@ -47,6 +51,7 @@ public class BaldosaPregunta : MonoBehaviour
     private bool jugadorEncima = false;
     private bool avisoBienvenidaDicho = false;
     private bool respondida = false;
+    private bool resolviendoSeleccion = false; // true mientras se resalta el botón elegido, antes de resolver de verdad
     public bool EstaRespondida => respondida;
     private GameObject playerObjeto;
     private MonoBehaviour scriptMovimientoPlayer;
@@ -121,21 +126,47 @@ public class BaldosaPregunta : MonoBehaviour
 
     void OnGUI()
     {
-        if (jugadorEncima && !respondida)
+        if (jugadorEncima && !respondida && !resolviendoSeleccion)
         {
             Event e = Event.current;
             if (e.isKey && e.type == EventType.KeyDown)
             {
                 if (e.keyCode == KeyCode.Alpha1 || e.keyCode == KeyCode.Keypad1)
-                    EvaluarRespuesta(0);
+                    SeleccionarOpcion(0);
                 else if (e.keyCode == KeyCode.Alpha2 || e.keyCode == KeyCode.Keypad2)
-                    EvaluarRespuesta(1);
+                    SeleccionarOpcion(1);
                 else if (e.keyCode == KeyCode.Alpha3 || e.keyCode == KeyCode.Keypad3)
-                    EvaluarRespuesta(2);
+                    SeleccionarOpcion(2);
                 else if (e.keyCode == KeyCode.Alpha4 || e.keyCode == KeyCode.Keypad4)
-                    UsarIA();
+                    SeleccionarOpcionIA();
             }
         }
+    }
+
+    /// <summary>
+    /// Se llama al presionar 1/2/3: si hay panel holográfico asignado, primero lo ilumina
+    /// (feedback visual) y recién cuando termina esa animación se resuelve de verdad la
+    /// respuesta con EvaluarRespuesta. Sin panel asignado, resuelve al toque como antes.
+    /// </summary>
+    private void SeleccionarOpcion(int indiceOpcion)
+    {
+        resolviendoSeleccion = true;
+
+        if (panelHolograma != null)
+            panelHolograma.Resaltar(indiceOpcion, () => EvaluarRespuesta(indiceOpcion));
+        else
+            EvaluarRespuesta(indiceOpcion);
+    }
+
+    /// <summary>Mismo truco que SeleccionarOpcion pero para la tecla 4 (Responder con IA).</summary>
+    private void SeleccionarOpcionIA()
+    {
+        resolviendoSeleccion = true;
+
+        if (panelHolograma != null)
+            panelHolograma.Resaltar(3, UsarIA);
+        else
+            UsarIA();
     }
 
     /// <summary>Sólo se llama en el Piso 1: el robot desea suerte usando las iniciales que
@@ -167,6 +198,14 @@ public class BaldosaPregunta : MonoBehaviour
 
     private void DesplegarPreguntaEnUI()
     {
+        if (panelHolograma != null)
+        {
+            panelHolograma.Mostrar(enunciadoPregunta, textoOpciones);
+            return;
+        }
+
+        // Respaldo por si todavía no arrastraste el PanelHolografico en el Inspector:
+        // sigue funcionando como antes, mostrando la pregunta en la terminal.
         if (GameManager.Instance != null && GameManager.Instance.uiManager != null)
         {
             string textoCompleto = $"{enunciadoPregunta}\n\n" +
@@ -184,6 +223,8 @@ public class BaldosaPregunta : MonoBehaviour
     {
         respondida = true;
         jugadorEncima = false;
+
+        if (panelHolograma != null) panelHolograma.Ocultar();
 
         if (GameManager.Instance != null)
         {
@@ -204,6 +245,8 @@ public class BaldosaPregunta : MonoBehaviour
         // Marcamos como respondida inmediatamente para que NUNCA te vuelva a preguntar lo mismo
         respondida = true;
         jugadorEncima = false;
+
+        if (panelHolograma != null) panelHolograma.Ocultar();
 
         if (GameManager.Instance != null)
         {
