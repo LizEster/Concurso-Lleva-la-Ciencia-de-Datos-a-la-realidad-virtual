@@ -138,30 +138,16 @@ public class ControladorActo1 : MonoBehaviour
     {
         if (introEnCurso || dialogoTerminado || !esperandoOpcion) return;
 
-        var teclado = UnityEngine.InputSystem.Keyboard.current;
-        if (teclado == null) return;
-
         OpcionDialogo[] opciones = guionRobot[nodoActual].opciones;
 
+        // Botones A / B / X del mando (o 1 / 2 / 3 en el teclado).
         for (int i = 0; i < opciones.Length; i++)
         {
-            var tecla = ObtenerTeclaNumero(i, teclado);
-            if (tecla != null && tecla.wasPressedThisFrame)
+            if (EntradaVR.OpcionPresionada(i))
             {
                 ElegirOpcion(i);
                 return;
             }
-        }
-    }
-
-    private UnityEngine.InputSystem.Controls.KeyControl ObtenerTeclaNumero(int indice, UnityEngine.InputSystem.Keyboard teclado)
-    {
-        switch (indice)
-        {
-            case 0: return teclado.digit1Key;
-            case 1: return teclado.digit2Key;
-            case 2: return teclado.digit3Key;
-            default: return null;
         }
     }
 
@@ -233,7 +219,7 @@ public class ControladorActo1 : MonoBehaviour
         string textoOpciones = "";
         for (int i = 0; i < opciones.Length; i++)
         {
-            textoOpciones += $"[{i + 1}] {opciones[i].textoOpcion}\n";
+            textoOpciones += $"{EntradaVR.EtiquetaOpcion(i)} {opciones[i].textoOpcion}\n";
         }
 
         if (uiManager != null)

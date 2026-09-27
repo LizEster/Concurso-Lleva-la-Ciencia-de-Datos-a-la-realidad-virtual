@@ -10,12 +10,18 @@ public class MouseLook : MonoBehaviour
 
     void Start()
     {
+        if (EntradaVR.VRActivo) return;
+
         // Bloquea el cursor en el centro de la pantalla
         Cursor.lockState = CursorLockMode.Locked;
     }
 
     void Update()
     {
+        // En VR la cámara la mueve el visor (RigVR); si alguien reactiva este script
+        // (por ejemplo TerminalInteractiva), no debe pisar la rotación de la cabeza.
+        if (EntradaVR.VRActivo) return;
+
         // LEER EL MOUSE USANDO EL NUEVO INPUT SYSTEM
         // Esto soluciona el error de compatibilidad directamente por código
         Vector2 mouseDelta = Mouse.current.delta.ReadValue() * (mouseSensitivity / 10f) * Time.deltaTime;

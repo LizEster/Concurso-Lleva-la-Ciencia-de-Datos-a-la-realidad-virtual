@@ -129,7 +129,7 @@ public class FinalManager : MonoBehaviour
 
         if (mostrandoMensajes)
         {
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))
+            if (EntradaVR.InteractuarPresionado() || EntradaVR.OpcionPresionada(0))
             {
                 MostrarSiguienteMensaje();
             }
@@ -245,7 +245,7 @@ public class FinalManager : MonoBehaviour
             yield return new WaitForSeconds(0.03f);
         }
 
-        textoFinal.text += "\n\n[Presiona Espacio para continuar]";
+        textoFinal.text += $"\n\n[Presiona {EntradaVR.NombreInteractuar} o {EntradaVR.NombresOpciones[0]} para continuar]";
         mostrandoMensajes = true;
     }
 

@@ -8,11 +8,13 @@ using TMPro;
 /// El aviso "[E] Abrir" / "[E] Cerrar" permanece OCULTO y sin función hasta que el
 /// jugador termina todo el diálogo del robot y elige "Preparada/o." (ver
 /// ControladorActo1.DialogoTerminado). A partir de ahí queda siempre visible sobre la
-/// terminal (no depende de la cercanía, sólo la interacción sí). La PRIMERA vez que se presiona E
-/// estando cerca: se reproduce la animación de la terminal (que deja de repetirse
-/// sola) -> aparece un panel pidiendo las iniciales -> al confirmarlas se muestra
-/// "Abriendo puerta..." y se abre la puerta (en vertical, con PuertaDataCenter). Las
-/// veces siguientes, E simplemente abre o cierra la puerta directamente.
+/// terminal (no depende de la cercanía, sólo la interacción sí). La PRIMERA vez que se presiona
+/// el gatillo (o E) estando cerca: se reproduce la animación de la terminal (que deja de repetirse
+/// sola) -> aparece un panel pidiendo las iniciales, que se eligen letra a letra con el stick
+/// izquierdo (en VR no hay teclado) -> al confirmarlas se muestra "Abriendo puerta..." y se
+/// abre la puerta (en vertical, con PuertaDataCenter). Las veces siguientes, el gatillo
+/// simplemente abre o cierra la puerta directamente. Los textos del Inspector que digan
+/// "[E]" se muestran como "[Gatillo]".
 /// </summary>
 public class TerminalInteractiva : MonoBehaviour
 {
@@ -29,9 +31,9 @@ public class TerminalInteractiva : MonoBehaviour
     public Transform puntoAviso;
     public float alturaAviso = 1.6f;
     [Tooltip("Texto del aviso cuando la puerta está cerrada.")]
-    public string textoAvisoAbrir = "[E] Abrir";
+    public string textoAvisoAbrir = "[Gatillo] Abrir";
     [Tooltip("Texto del aviso cuando la puerta ya está abierta.")]
-    public string textoAvisoCerrar = "[E] Cerrar";
+    public string textoAvisoCerrar = "[Gatillo] Cerrar";
     [Tooltip("Tamaño de fuente en unidades de mundo (no píxeles): pruébalo y ajústalo a ojo.")]
     public float tamanoFuenteAviso = 4f;
     public Color colorAviso = new Color(0f, 1f, 1f, 1f);
@@ -51,6 +53,8 @@ public class TerminalInteractiva : MonoBehaviour
     [Header("Referencias del jugador")]
     [Tooltip("El script MouseLook de la cámara del jugador: se desactiva mientras se escriben las iniciales, para que mover el mouse no gire la cámara.")]
     public MouseLook mouseLook;
+    [Tooltip("El PlayerMovement del jugador: se desactiva mientras se eligen las iniciales, porque el stick izquierdo pasa a elegir letras en vez de caminar. Si se deja vacío se busca solo.")]
+    public PlayerMovement movimientoJugador;
 
     [Header("Canvas")]
     [Tooltip("Arrastra aquí el mismo Canvas principal (RectTransform) que ya usa tu UIManager. El panel de iniciales se cuelga de él.")]
@@ -59,6 +63,8 @@ public class TerminalInteractiva : MonoBehaviour
     [Header("Panel de iniciales")]
     [TextArea(1, 2)]
     public string textoPedirIniciales = "Por favor escriba sus iniciales";
+    [TextArea(1, 2)]
+    public string textoAyudaIniciales = "Stick izquierdo: arriba/abajo cambia la letra, izquierda/derecha cambia de casilla\n[A] o [Gatillo] para confirmar";
     [TextArea(1, 2)]
     public string textoAbriendoPuerta = "Abriendo puerta...";
     [Tooltip("Cuántas letras como máximo se pueden escribir.")]
@@ -95,7 +101,13 @@ public class TerminalInteractiva : MonoBehaviour
     private TextMeshPro etiquetaAviso;
     private GameObject panelGO;
     private TextMeshProUGUI textoPanel;
-    private TMP_InputField campoIniciales;
+    private TextMeshProUGUI textoLetras;
+
+    // Selector de iniciales: ' ' es una casilla vacía (así se pueden dejar menos letras que el máximo).
+    private const string Alfabeto = " ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
+    private int[] letrasElegidas;
+    private int casillaActual;
+    private Vector2Int direccionStickAnterior;
 
     void Start()
     {
@@ -128,12 +140,7 @@ public class TerminalInteractiva : MonoBehaviour
     {
         if (panelIncialesAbierto)
         {
-            var teclado = UnityEngine.InputSystem.Keyboard.current;
-            if (teclado != null && teclado.enterKey.wasPressedThisFrame
-                && campoIniciales != null && !string.IsNullOrWhiteSpace(campoIniciales.text))
-            {
-                ConfirmarIniciales();
-            }
+            ActualizarSelectorIniciales();
             return;
         }
 
@@ -152,8 +159,7 @@ public class TerminalInteractiva : MonoBehaviour
         ActualizarCercania();
         if (!jugadorEnRango) return;
 
-        var tecladoE = UnityEngine.InputSystem.Keyboard.current;
-        if (tecladoE == null || !tecladoE.eKey.wasPressedThisFrame) return;
+        if (!EntradaVR.InteractuarPresionado()) return;
 
         if (!terminalYaUsada)
         {
@@ -197,7 +203,7 @@ public class TerminalInteractiva : MonoBehaviour
     private void ActualizarTextoAviso()
     {
         if (etiquetaAviso == null) return;
-        etiquetaAviso.text = puertaAbierta ? textoAvisoCerrar : textoAvisoAbrir;
+        etiquetaAviso.text = EntradaVR.TraducirTeclas(puertaAbierta ? textoAvisoCerrar : textoAvisoAbrir);
     }
 
     /// <summary>True cuando ya se puede mostrar/usar el aviso [E] Abrir: o no hay
@@ -246,7 +252,7 @@ public class TerminalInteractiva : MonoBehaviour
         GameObject textoGO = new GameObject("AvisoAbrirTerminal");
 
         etiquetaAviso = textoGO.AddComponent<TextMeshPro>();
-        etiquetaAviso.text = textoAvisoAbrir;
+        etiquetaAviso.text = EntradaVR.TraducirTeclas(textoAvisoAbrir);
         etiquetaAviso.fontSize = tamanoFuenteAviso;
         etiquetaAviso.color = colorAviso;
         etiquetaAviso.alignment = TextAlignmentOptions.Center;
@@ -327,7 +333,11 @@ public class TerminalInteractiva : MonoBehaviour
         animatorTerminal.Update(0f);
     }
 
-    /// <summary>Panel simple (fondo + texto + TMP_InputField) construido por código, igual que hace UIManager con su pantalla final.</summary>
+    /// <summary>
+    /// Panel simple (fondo + texto + casillas de letras) construido por código, igual que hace
+    /// UIManager con su pantalla final. Como en VR no hay teclado, las iniciales se eligen
+    /// con el stick izquierdo en vez de escribirse.
+    /// </summary>
     private void CrearPanelIniciales()
     {
         if (canvasRectTransform == null)
@@ -337,8 +347,8 @@ public class TerminalInteractiva : MonoBehaviour
         }
 
         if (mouseLook != null) mouseLook.enabled = false;
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        if (movimientoJugador == null && jugador != null) movimientoJugador = jugador.GetComponent<PlayerMovement>();
+        if (movimientoJugador != null) movimientoJugador.enabled = false;
 
         GameObject fondoGO = new GameObject("PanelIniciales");
         fondoGO.transform.SetParent(canvasRectTransform, false);
@@ -346,94 +356,113 @@ public class TerminalInteractiva : MonoBehaviour
         fondoRT.anchorMin = new Vector2(0.5f, 0.5f);
         fondoRT.anchorMax = new Vector2(0.5f, 0.5f);
         fondoRT.pivot = new Vector2(0.5f, 0.5f);
-        fondoRT.sizeDelta = new Vector2(520f, 220f);
+        fondoRT.sizeDelta = new Vector2(760f, 360f);
         fondoRT.anchoredPosition = Vector2.zero;
 
         Image fondoImg = fondoGO.AddComponent<Image>();
         fondoImg.color = new Color(0.03f, 0.07f, 0.11f, 0.95f);
 
-        GameObject textoGO = new GameObject("Texto");
-        textoGO.transform.SetParent(fondoRT, false);
-        RectTransform textoRT = textoGO.AddComponent<RectTransform>();
-        textoRT.anchorMin = new Vector2(0.08f, 0.55f);
-        textoRT.anchorMax = new Vector2(0.92f, 0.9f);
-        textoRT.offsetMin = Vector2.zero;
-        textoRT.offsetMax = Vector2.zero;
-
-        textoPanel = textoGO.AddComponent<TextMeshProUGUI>();
+        textoPanel = CrearTexto(fondoRT, "Texto", new Vector2(0.06f, 0.7f), new Vector2(0.94f, 0.95f), 36f);
         textoPanel.text = textoPedirIniciales;
-        textoPanel.fontSize = 26f;
-        textoPanel.color = Color.white;
-        textoPanel.alignment = TextAlignmentOptions.Center;
-        textoPanel.enableWordWrapping = true;
 
-        GameObject campoGO = new GameObject("CampoIniciales");
-        campoGO.transform.SetParent(fondoRT, false);
-        RectTransform campoRT = campoGO.AddComponent<RectTransform>();
-        campoRT.anchorMin = new Vector2(0.5f, 0.22f);
-        campoRT.anchorMax = new Vector2(0.5f, 0.22f);
-        campoRT.pivot = new Vector2(0.5f, 0.5f);
-        campoRT.sizeDelta = new Vector2(220f, 56f);
+        textoLetras = CrearTexto(fondoRT, "Letras", new Vector2(0.06f, 0.3f), new Vector2(0.94f, 0.7f), 72f);
+        textoLetras.fontStyle = FontStyles.Bold;
 
-        Image campoImg = campoGO.AddComponent<Image>();
-        campoImg.color = new Color(1f, 1f, 1f, 0.12f);
+        TextMeshProUGUI ayuda = CrearTexto(fondoRT, "Ayuda", new Vector2(0.06f, 0.04f), new Vector2(0.94f, 0.3f), 24f);
+        ayuda.text = textoAyudaIniciales;
+        ayuda.color = new Color(0.6f, 0.9f, 1f, 0.8f);
 
-        campoIniciales = campoGO.AddComponent<TMP_InputField>();
-        campoIniciales.targetGraphic = campoImg;
-        campoIniciales.characterLimit = maximoCaracteresIniciales;
-
-        GameObject areaGO = new GameObject("Text Area", typeof(RectTransform));
-        areaGO.transform.SetParent(campoGO.transform, false);
-        RectTransform areaRT = areaGO.GetComponent<RectTransform>();
-        areaRT.anchorMin = Vector2.zero;
-        areaRT.anchorMax = Vector2.one;
-        areaRT.offsetMin = new Vector2(12f, 6f);
-        areaRT.offsetMax = new Vector2(-12f, -6f);
-        areaGO.AddComponent<RectMask2D>();
-
-        GameObject placeholderGO = new GameObject("Placeholder");
-        placeholderGO.transform.SetParent(areaGO.transform, false);
-        RectTransform placeholderRT = placeholderGO.AddComponent<RectTransform>();
-        placeholderRT.anchorMin = Vector2.zero;
-        placeholderRT.anchorMax = Vector2.one;
-        placeholderRT.offsetMin = Vector2.zero;
-        placeholderRT.offsetMax = Vector2.zero;
-        TextMeshProUGUI placeholderTxt = placeholderGO.AddComponent<TextMeshProUGUI>();
-        placeholderTxt.text = "Ej: AB";
-        placeholderTxt.fontSize = 24f;
-        placeholderTxt.fontStyle = FontStyles.Italic;
-        placeholderTxt.color = new Color(1f, 1f, 1f, 0.4f);
-        placeholderTxt.alignment = TextAlignmentOptions.Center;
-
-        GameObject textoCampoGO = new GameObject("Text");
-        textoCampoGO.transform.SetParent(areaGO.transform, false);
-        RectTransform textoCampoRT = textoCampoGO.AddComponent<RectTransform>();
-        textoCampoRT.anchorMin = Vector2.zero;
-        textoCampoRT.anchorMax = Vector2.one;
-        textoCampoRT.offsetMin = Vector2.zero;
-        textoCampoRT.offsetMax = Vector2.zero;
-        TextMeshProUGUI textoCampoTxt = textoCampoGO.AddComponent<TextMeshProUGUI>();
-        textoCampoTxt.fontSize = 26f;
-        textoCampoTxt.color = Color.white;
-        textoCampoTxt.alignment = TextAlignmentOptions.Center;
-
-        campoIniciales.textViewport = areaRT;
-        campoIniciales.textComponent = textoCampoTxt;
-        campoIniciales.placeholder = placeholderTxt;
-        campoIniciales.text = "";
+        letrasElegidas = new int[Mathf.Max(1, maximoCaracteresIniciales)];
+        letrasElegidas[0] = 1; // arranca en "A" para que se entienda que hay que elegir letras
+        casillaActual = 0;
+        direccionStickAnterior = Vector2Int.zero;
+        DibujarLetras();
 
         panelGO = fondoGO;
         panelIncialesAbierto = true;
+    }
 
-        campoIniciales.ActivateInputField();
-        campoIniciales.Select();
+    private TextMeshProUGUI CrearTexto(RectTransform padre, string nombre, Vector2 anclaMin, Vector2 anclaMax, float tamano)
+    {
+        GameObject go = new GameObject(nombre);
+        go.transform.SetParent(padre, false);
+        RectTransform rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = anclaMin;
+        rt.anchorMax = anclaMax;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+
+        TextMeshProUGUI txt = go.AddComponent<TextMeshProUGUI>();
+        txt.fontSize = tamano;
+        txt.color = Color.white;
+        txt.alignment = TextAlignmentOptions.Center;
+        txt.enableWordWrapping = true;
+        return txt;
+    }
+
+    /// <summary>Stick ↑↓ cambia la letra de la casilla actual, ←→ cambia de casilla, A o gatillo confirma.</summary>
+    private void ActualizarSelectorIniciales()
+    {
+        if (letrasElegidas == null) return;
+
+        if (EntradaVR.OpcionPresionada(0) || EntradaVR.InteractuarPresionado())
+        {
+            if (!string.IsNullOrWhiteSpace(InicialesElegidas())) ConfirmarIniciales();
+            return;
+        }
+
+        // Sólo reacciona cuando el stick pasa del centro a una dirección, no mientras se mantiene.
+        Vector2 stick = EntradaVR.Mover;
+        Vector2Int direccion = Vector2Int.zero;
+        if (Mathf.Abs(stick.y) > 0.6f && Mathf.Abs(stick.y) >= Mathf.Abs(stick.x)) direccion.y = stick.y > 0 ? 1 : -1;
+        else if (Mathf.Abs(stick.x) > 0.6f) direccion.x = stick.x > 0 ? 1 : -1;
+
+        if (direccion == direccionStickAnterior) return;
+        direccionStickAnterior = direccion;
+        if (direccion == Vector2Int.zero) return;
+
+        if (direccion.y != 0)
+        {
+            // Stick arriba = letra siguiente (A -> B), como una rueda de combinación.
+            int cantidad = Alfabeto.Length;
+            letrasElegidas[casillaActual] = (letrasElegidas[casillaActual] + direccion.y + cantidad) % cantidad;
+        }
+        else
+        {
+            casillaActual = Mathf.Clamp(casillaActual + direccion.x, 0, letrasElegidas.Length - 1);
+        }
+
+        ReproducirBip();
+        DibujarLetras();
+    }
+
+    private void DibujarLetras()
+    {
+        if (textoLetras == null) return;
+
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < letrasElegidas.Length; i++)
+        {
+            char letra = Alfabeto[letrasElegidas[i]];
+            string visible = letra == ' ' ? "_" : letra.ToString();
+            sb.Append(i == casillaActual ? $"<color=#00FFFF><u>{visible}</u></color>" : visible);
+            if (i < letrasElegidas.Length - 1) sb.Append("  ");
+        }
+        textoLetras.text = sb.ToString();
+    }
+
+    private string InicialesElegidas()
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (int indice in letrasElegidas) sb.Append(Alfabeto[indice]);
+        return sb.ToString().Replace(" ", "");
     }
 
     private void ConfirmarIniciales()
     {
         panelIncialesAbierto = false;
 
-        string iniciales = campoIniciales != null ? campoIniciales.text.ToUpper() : "";
+        string iniciales = InicialesElegidas();
         Debug.Log($"> [TerminalInteractiva] Iniciales ingresadas: {iniciales}");
 
         if (GameManager.Instance != null)
@@ -441,7 +470,7 @@ public class TerminalInteractiva : MonoBehaviour
             GameManager.Instance.inicialesJugador = iniciales;
         }
 
-        if (campoIniciales != null) campoIniciales.interactable = false;
+        if (textoLetras != null) textoLetras.text = iniciales;
         if (textoPanel != null) textoPanel.text = textoAbriendoPuerta;
 
         StartCoroutine(SecuenciaFinalApertura());
@@ -458,8 +487,7 @@ public class TerminalInteractiva : MonoBehaviour
         }
 
         if (mouseLook != null) mouseLook.enabled = true;
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        if (movimientoJugador != null) movimientoJugador.enabled = true;
 
         ReproducirBip();
         if (NubeDialogoBot.Instancia != null)

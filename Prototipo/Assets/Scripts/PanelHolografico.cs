@@ -5,8 +5,8 @@ using UnityEngine;
 
 /// <summary>
 /// Controla el panel holográfico de preguntas que cuelga sobre cada BaldosaPregunta.
-/// Este panel NO recibe clicks de mouse: BaldosaPregunta sigue leyendo las teclas
-/// 1/2/3/4 como hasta ahora, y simplemente le avisa a este panel qué mostrar y qué
+/// Este panel NO recibe clicks: BaldosaPregunta lee los botones A/B/X/Y del mando
+/// (o las teclas 1/2/3/4), y simplemente le avisa a este panel qué mostrar y qué
 /// botón resaltar antes de resolver la respuesta de verdad.
 /// </summary>
 public class PanelHolografico : MonoBehaviour
@@ -58,12 +58,12 @@ public class PanelHolografico : MonoBehaviour
             if (esBotonIA)
             {
                 botones[i].gameObject.SetActive(true);
-                botones[i].SetTexto("[4] Responder con IA");
+                botones[i].SetTexto($"{EntradaVR.EtiquetaOpcion(3)} Responder con IA");
             }
             else if (tieneOpcion)
             {
                 botones[i].gameObject.SetActive(true);
-                botones[i].SetTexto($"[{i + 1}] {opciones[i]}");
+                botones[i].SetTexto($"{EntradaVR.EtiquetaOpcion(i)} {opciones[i]}");
             }
             else
             {
@@ -108,7 +108,7 @@ public class PanelHolografico : MonoBehaviour
     }
 
     /// <summary>
-    /// BaldosaPregunta llama esto apenas detecta la tecla 1/2/3/4: ilumina el botón
+    /// BaldosaPregunta llama esto apenas detecta el botón A/B/X/Y: ilumina el botón
     /// elegido y, cuando termina esa animación de resaltado, ejecuta 'alTerminar'
     /// (ahí es cuando BaldosaPregunta recién llama a EvaluarRespuesta o UsarIA).
     /// </summary>

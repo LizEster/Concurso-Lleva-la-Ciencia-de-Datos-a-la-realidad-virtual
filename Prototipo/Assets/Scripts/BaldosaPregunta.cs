@@ -122,29 +122,19 @@ public class BaldosaPregunta : MonoBehaviour
             // (y por lo tanto arriesgarse a caer si el piso de atrás ya colapsó) mientras decide.
             DesplegarPreguntaEnUI();
         }
-    }
 
-    void OnGUI()
-    {
-        if (jugadorEncima && !respondida && !resolviendoSeleccion)
+        // Botones A / B / X eligen una opción e Y responde con IA (o 1 / 2 / 3 / 4 en el teclado).
+        if (jugadorEncima && !resolviendoSeleccion)
         {
-            Event e = Event.current;
-            if (e.isKey && e.type == EventType.KeyDown)
-            {
-                if (e.keyCode == KeyCode.Alpha1 || e.keyCode == KeyCode.Keypad1)
-                    SeleccionarOpcion(0);
-                else if (e.keyCode == KeyCode.Alpha2 || e.keyCode == KeyCode.Keypad2)
-                    SeleccionarOpcion(1);
-                else if (e.keyCode == KeyCode.Alpha3 || e.keyCode == KeyCode.Keypad3)
-                    SeleccionarOpcion(2);
-                else if (e.keyCode == KeyCode.Alpha4 || e.keyCode == KeyCode.Keypad4)
-                    SeleccionarOpcionIA();
-            }
+            if (EntradaVR.OpcionPresionada(0)) SeleccionarOpcion(0);
+            else if (EntradaVR.OpcionPresionada(1)) SeleccionarOpcion(1);
+            else if (EntradaVR.OpcionPresionada(2)) SeleccionarOpcion(2);
+            else if (EntradaVR.OpcionPresionada(3)) SeleccionarOpcionIA();
         }
     }
 
     /// <summary>
-    /// Se llama al presionar 1/2/3: si hay panel holográfico asignado, primero lo ilumina
+    /// Se llama al presionar A/B/X: si hay panel holográfico asignado, primero lo ilumina
     /// (feedback visual) y recién cuando termina esa animación se resuelve de verdad la
     /// respuesta con EvaluarRespuesta. Sin panel asignado, resuelve al toque como antes.
     /// </summary>
@@ -158,7 +148,7 @@ public class BaldosaPregunta : MonoBehaviour
             EvaluarRespuesta(indiceOpcion);
     }
 
-    /// <summary>Mismo truco que SeleccionarOpcion pero para la tecla 4 (Responder con IA).</summary>
+    /// <summary>Mismo truco que SeleccionarOpcion pero para el botón Y (Responder con IA).</summary>
     private void SeleccionarOpcionIA()
     {
         resolviendoSeleccion = true;
@@ -209,10 +199,10 @@ public class BaldosaPregunta : MonoBehaviour
         if (GameManager.Instance != null && GameManager.Instance.uiManager != null)
         {
             string textoCompleto = $"{enunciadoPregunta}\n\n" +
-                                   $"[1] {textoOpciones[0]}\n" +
-                                   $"[2] {textoOpciones[1]}\n" +
-                                   $"[3] {textoOpciones[2]}\n" +
-                                   $"[4] Responder con IA";
+                                   $"{EntradaVR.EtiquetaOpcion(0)} {textoOpciones[0]}\n" +
+                                   $"{EntradaVR.EtiquetaOpcion(1)} {textoOpciones[1]}\n" +
+                                   $"{EntradaVR.EtiquetaOpcion(2)} {textoOpciones[2]}\n" +
+                                   $"{EntradaVR.EtiquetaOpcion(3)} Responder con IA";
 
             GameManager.Instance.uiManager.MostrarMensajeTerminal(textoCompleto);
         }
