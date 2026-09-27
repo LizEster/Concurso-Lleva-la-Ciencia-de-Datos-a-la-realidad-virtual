@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.XR.Management;
 using UnityEditor.XR.Management.Metadata;
+using UnityEditor.XR.OpenXR.Features;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -51,6 +52,31 @@ public static class ConfigurarQuestVR
         EditorUtility.DisplayDialog("Listo",
             "Proyecto configurado para Meta Quest.\n\nPara probar: conecta el Quest por USB (con el modo desarrollador activado) y usa File > Build Profiles > Android > Build And Run.\n\nRevisa también Project Settings > XR Plug-in Management > Project Validation por si queda alguna advertencia.",
             "OK");
+    }
+
+    /// <summary>
+    /// Compila el APK con las escenas de Build Settings en "Builds/SedAlgoritmica.apk" (junto a
+    /// la carpeta Assets). También se puede llamar por consola con
+    /// -executeMethod ConfigurarQuestVR.CompilarAPK
+    /// </summary>
+    [MenuItem("VR/Compilar APK para Quest")]
+    public static void CompilarAPK()
+    {
+        string[] escenas = EditorBuildSettings.scenes.Where(e => e.enabled).Select(e => e.path).ToArray();
+        var opciones = new BuildPlayerOptions
+        {
+            scenes = escenas,
+            locationPathName = "Builds/SedAlgoritmica.apk",
+            target = BuildTarget.Android,
+            targetGroup = BuildTargetGroup.Android,
+            options = BuildOptions.None,
+        };
+
+        var reporte = BuildPipeline.BuildPlayer(opciones);
+        Debug.Log($"ConfigurarQuestVR: build {reporte.summary.result}, {reporte.summary.totalErrors} errores, {reporte.summary.totalSize / (1024 * 1024)} MB -> {opciones.locationPathName}");
+
+        if (Application.isBatchMode)
+            EditorApplication.Exit(reporte.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded ? 0 : 1);
     }
 
     private static void ConfigurarAndroid()
@@ -114,6 +140,10 @@ public static class ConfigurarQuestVR
 
     private static void ConfigurarOpenXR()
     {
+        // En modo batch (o si nadie abrió aún la ventana de OpenXR) la lista de features todavía
+        // no existe: sin esto GetFeatures() vendría vacío y no se activaría nada.
+        FeatureHelpers.RefreshFeatures(BuildTargetGroup.Android);
+
         OpenXRSettings openXR = OpenXRSettings.GetSettingsForBuildTargetGroup(BuildTargetGroup.Android);
         if (openXR == null)
         {
@@ -129,6 +159,7 @@ public static class ConfigurarQuestVR
             {
                 feature.enabled = true;
                 EditorUtility.SetDirty(feature);
+                Debug.Log($"ConfigurarQuestVR: feature OpenXR activada: {feature.GetType().Name}");
             }
         }
         EditorUtility.SetDirty(openXR);
