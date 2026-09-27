@@ -245,7 +245,7 @@ public class FinalManager : MonoBehaviour
             yield return new WaitForSeconds(0.03f);
         }
 
-        textoFinal.text += $"\n\n[Presiona {EntradaVR.NombreInteractuar} o {EntradaVR.NombresOpciones[0]} para continuar]";
+        textoFinal.text += $"\n\n[Presiona {EntradaVR.NombreInteractuar} para continuar]";
         mostrandoMensajes = true;
     }
 

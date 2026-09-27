@@ -5,7 +5,7 @@ using UnityEngine;
 
 /// <summary>
 /// Controla el panel holográfico de preguntas que cuelga sobre cada BaldosaPregunta.
-/// Este panel NO recibe clicks: BaldosaPregunta lee los botones A/B/X/Y del mando
+/// Este panel NO recibe clicks: BaldosaPregunta lee los botones A/B/X/Y del control
 /// (o las teclas 1/2/3/4), y simplemente le avisa a este panel qué mostrar y qué
 /// botón resaltar antes de resolver la respuesta de verdad.
 /// </summary>

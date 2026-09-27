@@ -9,12 +9,12 @@ using TMPro;
 /// jugador termina todo el diálogo del robot y elige "Preparada/o." (ver
 /// ControladorActo1.DialogoTerminado). A partir de ahí queda siempre visible sobre la
 /// terminal (no depende de la cercanía, sólo la interacción sí). La PRIMERA vez que se presiona
-/// el gatillo (o E) estando cerca: se reproduce la animación de la terminal (que deja de repetirse
-/// sola) -> aparece un panel pidiendo las iniciales, que se eligen letra a letra con el stick
-/// izquierdo (en VR no hay teclado) -> al confirmarlas se muestra "Abriendo puerta..." y se
-/// abre la puerta (en vertical, con PuertaDataCenter). Las veces siguientes, el gatillo
-/// simplemente abre o cierra la puerta directamente. Los textos del Inspector que digan
-/// "[E]" se muestran como "[Gatillo]".
+/// A en el control (o E) estando cerca: se reproduce la animación de la terminal (que deja de
+/// repetirse sola) -> aparece un panel pidiendo las iniciales, que se eligen letra a letra con el
+/// joystick (en VR no hay teclado) -> al confirmarlas se muestra "Abriendo puerta..." y se
+/// abre la puerta (en vertical, con PuertaDataCenter). Las veces siguientes, A simplemente
+/// abre o cierra la puerta directamente. Los textos del Inspector que digan "[E]" se
+/// muestran como "[A]".
 /// </summary>
 public class TerminalInteractiva : MonoBehaviour
 {
@@ -31,9 +31,9 @@ public class TerminalInteractiva : MonoBehaviour
     public Transform puntoAviso;
     public float alturaAviso = 1.6f;
     [Tooltip("Texto del aviso cuando la puerta está cerrada.")]
-    public string textoAvisoAbrir = "[Gatillo] Abrir";
+    public string textoAvisoAbrir = "[A] Abrir";
     [Tooltip("Texto del aviso cuando la puerta ya está abierta.")]
-    public string textoAvisoCerrar = "[Gatillo] Cerrar";
+    public string textoAvisoCerrar = "[A] Cerrar";
     [Tooltip("Tamaño de fuente en unidades de mundo (no píxeles): pruébalo y ajústalo a ojo.")]
     public float tamanoFuenteAviso = 4f;
     public Color colorAviso = new Color(0f, 1f, 1f, 1f);
@@ -53,7 +53,7 @@ public class TerminalInteractiva : MonoBehaviour
     [Header("Referencias del jugador")]
     [Tooltip("El script MouseLook de la cámara del jugador: se desactiva mientras se escriben las iniciales, para que mover el mouse no gire la cámara.")]
     public MouseLook mouseLook;
-    [Tooltip("El PlayerMovement del jugador: se desactiva mientras se eligen las iniciales, porque el stick izquierdo pasa a elegir letras en vez de caminar. Si se deja vacío se busca solo.")]
+    [Tooltip("El PlayerMovement del jugador: se desactiva mientras se eligen las iniciales, porque el joystick pasa a elegir letras en vez de caminar. Si se deja vacío se busca solo.")]
     public PlayerMovement movimientoJugador;
 
     [Header("Canvas")]
@@ -64,7 +64,7 @@ public class TerminalInteractiva : MonoBehaviour
     [TextArea(1, 2)]
     public string textoPedirIniciales = "Por favor escriba sus iniciales";
     [TextArea(1, 2)]
-    public string textoAyudaIniciales = "Stick izquierdo: arriba/abajo cambia la letra, izquierda/derecha cambia de casilla\n[A] o [Gatillo] para confirmar";
+    public string textoAyudaIniciales = "Joystick: arriba/abajo cambia la letra, izquierda/derecha cambia de casilla\n[A] para confirmar";
     [TextArea(1, 2)]
     public string textoAbriendoPuerta = "Abriendo puerta...";
     [Tooltip("Cuántas letras como máximo se pueden escribir.")]
@@ -336,7 +336,7 @@ public class TerminalInteractiva : MonoBehaviour
     /// <summary>
     /// Panel simple (fondo + texto + casillas de letras) construido por código, igual que hace
     /// UIManager con su pantalla final. Como en VR no hay teclado, las iniciales se eligen
-    /// con el stick izquierdo en vez de escribirse.
+    /// con el joystick del control en vez de escribirse.
     /// </summary>
     private void CrearPanelIniciales()
     {
@@ -400,7 +400,7 @@ public class TerminalInteractiva : MonoBehaviour
         return txt;
     }
 
-    /// <summary>Stick ↑↓ cambia la letra de la casilla actual, ←→ cambia de casilla, A o gatillo confirma.</summary>
+    /// <summary>Joystick ↑↓ cambia la letra de la casilla actual, ←→ cambia de casilla, A confirma.</summary>
     private void ActualizarSelectorIniciales()
     {
         if (letrasElegidas == null) return;

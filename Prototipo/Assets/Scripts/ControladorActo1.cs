@@ -140,7 +140,7 @@ public class ControladorActo1 : MonoBehaviour
 
         OpcionDialogo[] opciones = guionRobot[nodoActual].opciones;
 
-        // Botones A / B / X del mando (o 1 / 2 / 3 en el teclado).
+        // Botones A / B / X del control (o 1 / 2 / 3 en el teclado).
         for (int i = 0; i < opciones.Length; i++)
         {
             if (EntradaVR.OpcionPresionada(i))

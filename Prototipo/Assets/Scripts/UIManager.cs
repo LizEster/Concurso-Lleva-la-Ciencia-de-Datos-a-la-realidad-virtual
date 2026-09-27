@@ -28,7 +28,7 @@ public class UIManager : MonoBehaviour
     public Color colorFondoBoton = new Color(1f, 1f, 1f, 0.15f);
     public int tamanoFuenteTexto = 24;
     public int tamanoFuenteBoton = 26;
-    public string textoBotonContinuar = "Presiona [Gatillo] para continuar";
+    public string textoBotonContinuar = "Presiona [A] para continuar";
 
     private GameObject avisoContinuar;
     private bool esperandoTeclaE = false;
@@ -167,7 +167,7 @@ public class UIManager : MonoBehaviour
                 $"La próxima vez, calcula mejor tu huella.";
         }
 
-        // El aviso de "Presiona [Gatillo] para continuar" (que hace el flash blanco y carga la
+        // El aviso de "Presiona [A] para continuar" (que hace el flash blanco y carga la
         // siguiente escena) solo tiene sentido en el final bueno.
         if (avisoContinuar != null)
         {
@@ -215,7 +215,7 @@ public class UIManager : MonoBehaviour
         txt.enableWordWrapping = true;
         textoFinalExplicativo = txt;
 
-        // --- Aviso "Presiona [Gatillo] para continuar" (ya no es un botón clicable) ---
+        // --- Aviso "Presiona [A] para continuar" (ya no es un botón clicable) ---
         GameObject avisoGO = new GameObject("AvisoContinuar");
         avisoGO.transform.SetParent(panelRT, false);
         RectTransform avisoRT = avisoGO.AddComponent<RectTransform>();

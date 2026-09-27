@@ -1,5 +1,16 @@
 {
   "dependencies": {
+    "com.google.xr.cardboard": {
+      "version": "https://github.com/googlevr/cardboard-xr-plugin.git#v1.35.0",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.inputsystem": "1.7.0",
+        "com.unity.xr.management": "3.2.9",
+        "com.unity.xr.legacyinputhelpers": "2.1.4"
+      },
+      "hash": "36ac9815b8f191fe11e149b7f323368fa86655a6"
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 1,
@@ -316,19 +327,6 @@
         "com.unity.xr.core-utils": "2.2.1",
         "com.unity.modules.subsystems": "1.0.0",
         "com.unity.xr.legacyinputhelpers": "2.1.11"
-      },
-      "url": "https://packages.unity.com"
-    },
-    "com.unity.xr.openxr": {
-      "version": "1.16.1",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.inputsystem": "1.6.3",
-        "com.unity.xr.core-utils": "2.3.0",
-        "com.unity.xr.management": "4.4.0",
-        "com.unity.modules.androidjni": "1.0.0",
-        "com.unity.xr.legacyinputhelpers": "2.1.2"
       },
       "url": "https://packages.unity.com"
     },

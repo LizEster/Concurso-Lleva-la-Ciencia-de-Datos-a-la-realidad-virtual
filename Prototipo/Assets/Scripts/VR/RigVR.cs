@@ -10,11 +10,13 @@ using UnityEngine.XR;
 /// Convierte al jugador FPS de cada escena en un jugador VR, sin tener que tocar las escenas:
 /// se ejecuta solo al cargar cualquier escena (no hay que arrastrarlo a ningún objeto).
 ///  - La cámara del Player pasa a seguir la cabeza del visor (TrackedPoseDriver) y cuelga de
-///    un "OrigenVR" a la altura de los pies, así la altura real del jugador es la del juego.
-///  - Aparecen dos manos simples que siguen a los mandos.
+///    un "OrigenVR" a la altura de los pies. En el Shinecon (Cardboard) el celular sólo mide
+///    hacia dónde se gira la cabeza, no la altura, así que se usa una altura de ojos fija.
+///  - Si hay mandos con seguimiento (Quest y similares), aparecen dos manos simples. El
+///    control Bluetooth del Shinecon no se sigue en el espacio, así que ahí no hay manos.
 ///  - Los Canvas en modo pantalla (HUD, fundidos, pantallas finales) no se ven en un visor,
 ///    así que se pasan a paneles en el mundo que flotan delante de los ojos.
-/// Si no hay visor activo (por ejemplo, Play en el editor sin Quest Link) no hace nada y el
+/// Si no hay visor activo (por ejemplo, Play en el editor) no hace nada y el
 /// juego se comporta como la versión de PC.
 /// </summary>
 public static class RigVR
@@ -71,7 +73,7 @@ public static class RigVR
         camara.tag = "MainCamera";
         camara.nearClipPlane = 0.05f;
 
-        // El mouse y el PlayerInput (WASD, saltar con B/Y del mando) ya no se usan en VR.
+        // El mouse y el PlayerInput (WASD, saltar con los botones del control) ya no se usan en VR.
         MouseLook mouseLook = camara.GetComponent<MouseLook>();
         if (mouseLook != null) mouseLook.enabled = false;
         PlayerInput playerInput = jugador.GetComponent<PlayerInput>();
@@ -93,8 +95,11 @@ public static class RigVR
         camara.transform.localRotation = Quaternion.identity;
         AgregarSeguimiento(camara.gameObject, "<XRHMD>/centerEyePosition", "<XRHMD>/centerEyeRotation", "<XRHMD>/trackingState");
 
-        CrearMano(origen, "ManoIzquierda", "{LeftHand}");
-        CrearMano(origen, "ManoDerecha", "{RightHand}");
+        if (InputSystem.GetDevice<XRController>() != null)
+        {
+            CrearMano(origen, "ManoIzquierda", "{LeftHand}");
+            CrearMano(origen, "ManoDerecha", "{RightHand}");
+        }
 
         Cabeza = camara.transform;
         movimiento.ConfigurarVR(Cabeza, origen);

@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 /// <summary>
 /// Una fila de opción dentro del PanelHolografico (ej: "[1] Reina"). OJO: no es un
-/// Button real, no recibe clicks (el input viene de los botones del mando). Solo
+/// Button real, no recibe clicks (el input viene de los botones del control). Solo
 /// cambia de color y hace un pequeño "pulso" de escala cuando PanelHolografico.Resaltar()
 /// la elige, para dar feedback visual al presionar A/B/X/Y.
 /// </summary>

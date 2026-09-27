@@ -9,9 +9,9 @@ public class PlayerMovement : MonoBehaviour
     public float jumpHeight = 3.5f;
 
     [Header("VR")]
-    [Tooltip("Velocidad al caminar con el stick en VR. Más baja que en PC: en visor, ir rápido marea.")]
+    [Tooltip("Velocidad al caminar con el joystick en VR. Más baja que en PC: en visor, ir rápido marea.")]
     public float velocidadVR = 2.5f;
-    [Tooltip("Grados que gira el jugador por cada toque del stick derecho.")]
+    [Tooltip("Grados que gira el jugador por cada toque del stick derecho (si el control tiene uno; si no, se gira con la cabeza).")]
     public float anguloGiroPorPaso = 45f;
     [Tooltip("Qué tanto hay que empujar el stick derecho para girar (0 a 1).")]
     public float umbralGiro = 0.6f;
@@ -59,6 +59,9 @@ public class PlayerMovement : MonoBehaviour
             Vector3 adelante = Vector3.ProjectOnPlane(cabezaVR.forward, Vector3.up).normalized;
             Vector3 derecha = Vector3.ProjectOnPlane(cabezaVR.right, Vector3.up).normalized;
             move = (derecha * stick.x + adelante * stick.y) * velocidadVR;
+
+            // En VR el PlayerInput está apagado (RigVR), así que el salto se lee aquí.
+            if (EntradaVR.SaltarPresionado()) Saltar();
         }
         else
         {
@@ -113,6 +116,11 @@ public class PlayerMovement : MonoBehaviour
     }
 
     public void OnJump(InputValue value)
+    {
+        Saltar();
+    }
+
+    private void Saltar()
     {
         if (controller.isGrounded)
         {

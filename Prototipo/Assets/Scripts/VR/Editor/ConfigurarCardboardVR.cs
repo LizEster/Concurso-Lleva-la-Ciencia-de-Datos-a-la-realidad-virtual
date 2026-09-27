@@ -4,34 +4,28 @@ using UnityEditor.Build;
 using UnityEditor.Build.Profile;
 using UnityEditor.XR.Management;
 using UnityEditor.XR.Management.Metadata;
-using UnityEditor.XR.OpenXR.Features;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.XR.Management;
-using UnityEngine.XR.OpenXR;
 
 /// <summary>
-/// Menú "VR > Configurar proyecto para Meta Quest": deja el proyecto listo para compilar un
-/// APK que corre directo en el visor (sin PC). Se puede ejecutar varias veces sin problema.
+/// Menú "VR > Configurar proyecto para Shinecon (Cardboard)": deja el proyecto listo para
+/// compilar un APK que corre en un celular Android dentro de un visor tipo Shinecon, con el
+/// plugin oficial de Google Cardboard. Sigue la guía
+/// https://developers.google.com/cardboard/develop/unity/quickstart y se puede ejecutar
+/// varias veces sin problema. Las dependencias de Gradle que pide Cardboard están en
+/// Assets/Plugins/Android (mainTemplate.gradle y gradleTemplate.properties).
 /// Requiere tener instalado en Unity Hub el módulo "Android Build Support" (con OpenJDK y
-/// Android SDK & NDK Tools).
+/// Android SDK &amp; NDK Tools).
 /// </summary>
-public static class ConfigurarQuestVR
+public static class ConfigurarCardboardVR
 {
     private const string CarpetaXR = "Assets/XR";
     private const string RutaAjustesXR = CarpetaXR + "/XRGeneralSettingsPerBuildTarget.asset";
+    private const string LoaderCardboard = "Google.XR.Cardboard.XRLoader";
 
-    // Mandos de Quest 1/2 (Touch), Quest 3 (Touch Plus) y Quest Pro (Touch Pro), más el soporte de Quest.
-    private static readonly string[] FeaturesOpenXR =
-    {
-        "MetaQuestFeature",
-        "OculusTouchControllerProfile",
-        "MetaQuestTouchPlusControllerProfile",
-        "MetaQuestTouchProControllerProfile",
-    };
-
-    [MenuItem("VR/Configurar proyecto para Meta Quest")]
+    [MenuItem("VR/Configurar proyecto para Shinecon (Cardboard)")]
     public static void Configurar()
     {
         if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Android, BuildTarget.Android))
@@ -44,23 +38,22 @@ public static class ConfigurarQuestVR
 
         ConfigurarAndroid();
         ConfigurarXRManagement();
-        ConfigurarOpenXR();
-        ConfigurarURPParaVisor();
+        ConfigurarURPParaCelular();
 
         ActivarAndroid();
         AssetDatabase.SaveAssets();
 
         EditorUtility.DisplayDialog("Listo",
-            "Proyecto configurado para Meta Quest.\n\nPara probar: conecta el Quest por USB (con el modo desarrollador activado) y usa File > Build Profiles > Android > Build And Run.\n\nRevisa también Project Settings > XR Plug-in Management > Project Validation por si queda alguna advertencia.",
+            "Proyecto configurado para Shinecon (Google Cardboard).\n\nPara probar: conecta el celular Android por USB (con la depuración USB activada) y usa VR > Compilar APK, o File > Build Profiles > Android > Build And Run.",
             "OK");
     }
 
     /// <summary>
     /// Compila el APK con las escenas de Build Settings en "Builds/SedAlgoritmica.apk" (junto a
     /// la carpeta Assets). También se puede llamar por consola con
-    /// -executeMethod ConfigurarQuestVR.CompilarAPK
+    /// -executeMethod ConfigurarCardboardVR.CompilarAPK
     /// </summary>
-    [MenuItem("VR/Compilar APK para Quest")]
+    [MenuItem("VR/Compilar APK")]
     public static void CompilarAPK()
     {
         // URP elige qué pipelines y shaders incluir según la plataforma ACTIVA del editor, no
@@ -78,7 +71,7 @@ public static class ConfigurarQuestVR
         };
 
         var reporte = BuildPipeline.BuildPlayer(opciones);
-        Debug.Log($"ConfigurarQuestVR: build {reporte.summary.result}, {reporte.summary.totalErrors} errores, {reporte.summary.totalSize / (1024 * 1024)} MB -> {opciones.locationPathName}");
+        Debug.Log($"ConfigurarCardboardVR: build {reporte.summary.result}, {reporte.summary.totalErrors} errores, {reporte.summary.totalSize / (1024 * 1024)} MB -> {opciones.locationPathName}");
 
         if (Application.isBatchMode)
             EditorApplication.Exit(reporte.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded ? 0 : 1);
@@ -94,7 +87,7 @@ public static class ConfigurarQuestVR
         BuildProfile activo = BuildProfile.GetActiveBuildProfile();
         if (activo != null)
         {
-            Debug.Log($"ConfigurarQuestVR: se desactiva el Build Profile '{activo.name}' para usar la plataforma Android.");
+            Debug.Log($"ConfigurarCardboardVR: se desactiva el Build Profile '{activo.name}' para usar la plataforma Android.");
             BuildProfile.SetActiveBuildProfile(null);
         }
 
@@ -102,20 +95,30 @@ public static class ConfigurarQuestVR
             EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
     }
 
+    /// <summary>Ajustes de Player Settings que pide la guía de Cardboard.</summary>
     private static void ConfigurarAndroid()
     {
         NamedBuildTarget android = NamedBuildTarget.Android;
 
+        // El celular va acostado dentro del visor.
+        PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
+        PlayerSettings.Android.optimizedFramePacing = false;
+
         PlayerSettings.SetScriptingBackend(android, ScriptingImplementation.IL2CPP);
         PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
-        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel32;
+        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
+        PlayerSettings.Android.targetSdkVersion = (AndroidSdkVersions)35;
+        PlayerSettings.Android.applicationEntry = AndroidApplicationEntry.Activity;
+        // Cardboard descarga los parámetros del visor al escanear su código QR.
+        PlayerSettings.Android.forceInternetPermission = true;
         PlayerSettings.colorSpace = ColorSpace.Linear;
 
+        // OpenGL ES 3 es lo más compatible entre celulares de gama media y baja.
         PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
-        PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.Vulkan });
+        PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.OpenGLES3 });
         EditorUserBuildSettings.androidBuildSubtarget = MobileTextureSubtarget.ASTC;
 
-        // El identificador venía de la plantilla de Unity; el Quest necesita uno propio.
+        // El identificador venía de la plantilla de Unity; Android necesita uno propio.
         string id = PlayerSettings.GetApplicationIdentifier(android);
         if (string.IsNullOrEmpty(id) || id.Contains("unity.template"))
             PlayerSettings.SetApplicationIdentifier(android, "com.concursocienciadatos.sedalgoritmica");
@@ -154,45 +157,26 @@ public static class ConfigurarQuestVR
             AssetDatabase.AddObjectToAsset(manager, porPlataforma);
         }
 
+        // Cardboard debe ser el único proveedor de VR en Android.
+        foreach (var loader in ajustes.Manager.activeLoaders.ToArray())
+        {
+            if (loader != null && loader.GetType().FullName != LoaderCardboard)
+                XRPackageMetadataStore.RemoveLoader(ajustes.Manager, loader.GetType().FullName, BuildTargetGroup.Android);
+        }
+
         ajustes.InitManagerOnStart = true;
-        XRPackageMetadataStore.AssignLoader(ajustes.Manager, typeof(OpenXRLoader).FullName, BuildTargetGroup.Android);
+        if (!XRPackageMetadataStore.AssignLoader(ajustes.Manager, LoaderCardboard, BuildTargetGroup.Android))
+            Debug.LogError("ConfigurarCardboardVR: no se pudo asignar el loader de Cardboard. ¿Está instalado el paquete com.google.xr.cardboard?");
 
         EditorUtility.SetDirty(ajustes);
         EditorUtility.SetDirty(porPlataforma);
     }
 
-    private static void ConfigurarOpenXR()
-    {
-        // En modo batch (o si nadie abrió aún la ventana de OpenXR) la lista de features todavía
-        // no existe: sin esto GetFeatures() vendría vacío y no se activaría nada.
-        FeatureHelpers.RefreshFeatures(BuildTargetGroup.Android);
-
-        OpenXRSettings openXR = OpenXRSettings.GetSettingsForBuildTargetGroup(BuildTargetGroup.Android);
-        if (openXR == null)
-        {
-            Debug.LogWarning("ConfigurarQuestVR: no se encontraron los ajustes de OpenXR para Android. Abre Project Settings > XR Plug-in Management una vez y vuelve a ejecutar el menú.");
-            return;
-        }
-
-        openXR.renderMode = OpenXRSettings.RenderMode.SinglePassInstanced;
-
-        foreach (var feature in openXR.GetFeatures())
-        {
-            if (FeaturesOpenXR.Contains(feature.GetType().Name))
-            {
-                feature.enabled = true;
-                EditorUtility.SetDirty(feature);
-                Debug.Log($"ConfigurarQuestVR: feature OpenXR activada: {feature.GetType().Name}");
-            }
-        }
-        EditorUtility.SetDirty(openXR);
-    }
-
     /// <summary>
-    /// Ajustes del asset URP que usa Android (nivel de calidad "Mobile"): en un visor el HDR
-    /// cuesta mucho, el MSAA 4x es casi gratis en la GPU del Quest y la escala 0.8 se ve borrosa.
+    /// Ajustes del asset URP que usa Android (nivel de calidad "Mobile"): un celular tiene que
+    /// dibujar la escena dos veces (una por ojo), así que se apaga el HDR y se usa MSAA 2x.
     /// </summary>
-    private static void ConfigurarURPParaVisor()
+    private static void ConfigurarURPParaCelular()
     {
         int nivelMovil = System.Array.IndexOf(QualitySettings.names, "Mobile");
         if (nivelMovil < 0) return;
@@ -200,7 +184,7 @@ public static class ConfigurarQuestVR
         if (QualitySettings.GetRenderPipelineAssetAt(nivelMovil) is UniversalRenderPipelineAsset urp)
         {
             urp.supportsHDR = false;
-            urp.msaaSampleCount = 4;
+            urp.msaaSampleCount = 2;
             urp.renderScale = 1f;
             EditorUtility.SetDirty(urp);
         }
