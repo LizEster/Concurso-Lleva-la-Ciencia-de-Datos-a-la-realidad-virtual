@@ -1,6 +1,7 @@
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Build;
+using UnityEditor.Build.Profile;
 using UnityEditor.XR.Management;
 using UnityEditor.XR.Management.Metadata;
 using UnityEditor.XR.OpenXR.Features;
@@ -46,7 +47,7 @@ public static class ConfigurarQuestVR
         ConfigurarOpenXR();
         ConfigurarURPParaVisor();
 
-        EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
+        ActivarAndroid();
         AssetDatabase.SaveAssets();
 
         EditorUtility.DisplayDialog("Listo",
@@ -62,6 +63,10 @@ public static class ConfigurarQuestVR
     [MenuItem("VR/Compilar APK para Quest")]
     public static void CompilarAPK()
     {
+        // URP elige qué pipelines y shaders incluir según la plataforma ACTIVA del editor, no
+        // según la del build: si seguía activa Mac, el APK salía con el pipeline de PC.
+        ActivarAndroid();
+
         string[] escenas = EditorBuildSettings.scenes.Where(e => e.enabled).Select(e => e.path).ToArray();
         var opciones = new BuildPlayerOptions
         {
@@ -77,6 +82,24 @@ public static class ConfigurarQuestVR
 
         if (Application.isBatchMode)
             EditorApplication.Exit(reporte.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded ? 0 : 1);
+    }
+
+    /// <summary>
+    /// Deja Android como plataforma activa. El proyecto tiene un Build Profile "macOS"
+    /// (Assets/Settings/Build Profiles) que Unity reactiva al abrir el proyecto si estaba
+    /// activo, deshaciendo el cambio; por eso primero volvemos al perfil de plataforma normal.
+    /// </summary>
+    private static void ActivarAndroid()
+    {
+        BuildProfile activo = BuildProfile.GetActiveBuildProfile();
+        if (activo != null)
+        {
+            Debug.Log($"ConfigurarQuestVR: se desactiva el Build Profile '{activo.name}' para usar la plataforma Android.");
+            BuildProfile.SetActiveBuildProfile(null);
+        }
+
+        if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.Android)
+            EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
     }
 
     private static void ConfigurarAndroid()
