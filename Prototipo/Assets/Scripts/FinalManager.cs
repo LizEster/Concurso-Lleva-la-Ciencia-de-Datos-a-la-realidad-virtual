@@ -1,6 +1,6 @@
 // FinalManager.cs
 // Controla toda la secuencia del final en la escena "final1".
-// Se coloca en un objeto vacío llamado "FinalManager" en la escena final.
+// Los mensajes cambian según el nivel de refrigeración con el que el jugador terminó.
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -55,6 +55,8 @@ public class FinalManager : MonoBehaviour
     private bool mostrandoMensajes = false;
     private int mensajeActual = 0;
     private string[] mensajesFinales;
+    private string textoEsferaPequena;
+    private string textoEsferaGrande;
 
     void Start()
     {
@@ -63,13 +65,8 @@ public class FinalManager : MonoBehaviour
         float agua = DatosFinales.aguaConsumida;
         float refrigeracion = DatosFinales.refrigeracionRestante;
 
-        mensajesFinales = new string[]
-        {
-            $"> Output Generado con éxito.\n> Estado de refrigeración restante: {refrigeracion:F0}%",
-            $"> Incluso siendo eficiente y usando tu propia deducción la mayor parte del tiempo, tu consulta evaporó {agua:F2} litros de agua real.\n> Mantener esta red viva tiene un costo físico inevitable.\n> ¿Sabías que entrenar grandes modelos de lenguaje en la vida real evapora cientos de miles de litros?",
-            "> La Ciencia de Datos es una herramienta poderosa, pero cada vez que presionas 'Enter', el planeta paga una parte del precio.",
-            "> Úsala con conciencia."
-        };
+        // Preparar los textos según el nivel de refrigeración
+        PrepararTextos(agua, refrigeracion);
 
         if (esferaGigante != null)
         {
@@ -90,6 +87,64 @@ public class FinalManager : MonoBehaviour
         {
             panelBlancoEntrada.color = new Color(1f, 1f, 1f, 1f);
             StartCoroutine(FadeEntrada());
+        }
+    }
+
+    private void PrepararTextos(float agua, float refrigeracion)
+    {
+        // ===== TEXTO DE LA ESFERA PEQUEÑA (siempre muestra los litros reales) =====
+        textoEsferaPequena = $"Agua consumida al usar LLM de forma eficiente:\n{agua:F2} Litros";
+
+        // ===== TEXTO DE LA ESFERA GRANDE (cambia según refrigeración) =====
+        if (refrigeracion >= 60f)
+        {
+            textoEsferaGrande = "Esta esfera representa el agua que consume un solo entrenamiento real de IA.\nTu recorrido fue eficiente, pero el sistema completo no lo es.";
+        }
+        else if (refrigeracion >= 25f)
+        {
+            textoEsferaGrande = "Esta esfera representa el agua que consume un solo entrenamiento real de IA.\nDelegaste parte de tu razonamiento. Cada atajo multiplicó el costo.";
+        }
+        else
+        {
+            textoEsferaGrande = "Esta esfera representa el agua que consume un solo entrenamiento real de IA.\nEl sistema casi colapsa. Ahora imagina millones de usuarios haciendo lo mismo.";
+        }
+
+        // ===== MENSAJES FINALES (cambian según refrigeración) =====
+        if (refrigeracion >= 60f)
+        {
+            // FINAL EFICIENTE
+            mensajesFinales = new string[]
+            {
+                $"> Output generado con éxito.\n> Estado de refrigeración restante: {refrigeracion:F0}%\n> Rendimiento: ÓPTIMO.",
+                $"> Tu consulta evaporó {agua:F2} litros de agua real.\n> Fuiste eficiente. Usaste tu propia deducción la mayor parte del tiempo.\n> Pero incluso así, mantener esta red viva tiene un costo físico inevitable.",
+                "> ¿Sabías que entrenar un solo modelo de lenguaje grande evapora cientos de miles de litros de agua?\n> Y eso es solo el entrenamiento. Cada consulta, cada respuesta, cada 'Enter' evapora un poco más.",
+                "> La Ciencia de Datos es una herramienta poderosa.\n> Tú demostraste que se puede usar con inteligencia.\n> Sigue así: piensa antes de preguntar, y el planeta paga menos.",
+                "> Úsala con conciencia."
+            };
+        }
+        else if (refrigeracion >= 25f)
+        {
+            // FINAL INTERMEDIO
+            mensajesFinales = new string[]
+            {
+                $"> Output generado con éxito.\n> Estado de refrigeración restante: {refrigeracion:F0}%\n> Rendimiento: MODERADO.",
+                $"> Tu consulta evaporó {agua:F2} litros de agua real.\n> Podrías haber consumido menos si hubieses confiado más en tu propio razonamiento.\n> Cada vez que delegaste a la IA, el consumo de agua se disparó.",
+                "> ¿Sabías que entrenar un solo modelo de lenguaje grande evapora cientos de miles de litros de agua?\n> Millones de personas delegan su pensamiento a estas máquinas todos los días.\n> Multiplica tu consumo por cada una de ellas.",
+                "> La Ciencia de Datos es una herramienta poderosa, pero no gratuita.\n> Cada vez que presionas 'Enter' sin pensar primero, el planeta paga una parte del precio.",
+                "> Úsala con conciencia."
+            };
+        }
+        else
+        {
+            // FINAL CRÍTICO
+            mensajesFinales = new string[]
+            {
+                $"> Output generado con éxito... apenas.\n> Estado de refrigeración restante: {refrigeracion:F0}%\n> Rendimiento: CRÍTICO.",
+                $"> Tu consulta evaporó {agua:F2} litros de agua real.\n> Casi destruyes el sistema.\n> Delegar el razonamiento tiene un precio que no se ve, pero el planeta sí lo siente.",
+                "> ¿Sabías que entrenar un solo modelo de lenguaje grande evapora cientos de miles de litros de agua?\n> Ahora imagina a millones de usuarios haciendo exactamente lo que tú hiciste:\n> presionar un botón en vez de pensar.",
+                "> La Ciencia de Datos es una herramienta poderosa, pero peligrosa cuando se usa sin pensar.\n> Cada 'Enter' irreflexivo acelera un costo que el planeta no puede seguir pagando.",
+                "> La próxima vez, piensa antes de delegar.\n> Úsala con conciencia."
+            };
         }
     }
 
@@ -118,7 +173,6 @@ public class FinalManager : MonoBehaviour
                 esferaGigante.transform.localScale = escalaObjetivo;
                 esferaGiganteCreciendo = false;
 
-                // Automáticamente iniciar la transición al vacío negro
                 if (!finalActivado)
                 {
                     finalActivado = true;
@@ -129,7 +183,7 @@ public class FinalManager : MonoBehaviour
 
         if (mostrandoMensajes)
         {
-            if (EntradaVR.InteractuarPresionado() || EntradaVR.OpcionPresionada(0))
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))
             {
                 MostrarSiguienteMensaje();
             }
@@ -139,37 +193,40 @@ public class FinalManager : MonoBehaviour
     private void ActivarEsfera()
     {
         esferaActivada = true;
-        float agua = DatosFinales.aguaConsumida;
 
+        // Mostrar mensaje de la esfera pequeña
         if (textoEsfera != null)
         {
             textoEsfera.gameObject.SetActive(true);
-            textoEsfera.text = $"Agua consumida al usar LLM de forma eficiente:\n{agua:F2} Litros";
+            textoEsfera.text = textoEsferaPequena;
         }
 
         StartCoroutine(EsperarYMostrarGigante());
     }
-    
+
     private IEnumerator EsperarYMostrarGigante()
     {
         yield return new WaitForSeconds(4f);
 
         if (esferaGigante != null)
         {
-            // Primero aparece estática al mismo tamaño que la otra
             esferaGigante.SetActive(true);
 
-            // Espera 3 segundos para que el jugador la vea
+            // Cambiar el texto al mensaje de la esfera grande
+            if (textoEsfera != null)
+            {
+                textoEsfera.text = textoEsferaGrande;
+            }
+
+            // Espera 3 segundos para que el jugador la vea antes de que crezca
             yield return new WaitForSeconds(3f);
 
-            // Ahora empieza a crecer
             esferaGiganteCreciendo = true;
         }
     }
 
     private IEnumerator EsperarYActivarFinal()
     {
-        // Pausa para que el jugador asimile la esfera gigante antes de que todo se ponga negro
         yield return new WaitForSeconds(pausaAntesDeNegro);
         StartCoroutine(TransicionAVacioNegro());
     }
@@ -203,10 +260,8 @@ public class FinalManager : MonoBehaviour
             }
         }
 
-        // Esperar un momento en negro antes de los mensajes
         yield return new WaitForSeconds(2f);
 
-        // Empezar a mostrar mensajes
         if (textoFinal != null)
         {
             textoFinal.gameObject.SetActive(true);
@@ -245,7 +300,7 @@ public class FinalManager : MonoBehaviour
             yield return new WaitForSeconds(0.03f);
         }
 
-        textoFinal.text += $"\n\n[Presiona {EntradaVR.NombreInteractuar} para continuar]";
+        textoFinal.text += "\n\n[Presiona Espacio para continuar]";
         mostrandoMensajes = true;
     }
 

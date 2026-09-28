@@ -43,7 +43,7 @@ public class GameManager : MonoBehaviour
             uiManager.ActualizarMétricas(refrigeracion, aguaConsumidaLitros);
         }
 
-        if (nivelAgua != null)          // ← nuevo
+        if (nivelAgua != null)
         {
             nivelAgua.ActualizarNivel(refrigeracion);
         }
@@ -63,7 +63,7 @@ public class GameManager : MonoBehaviour
             uiManager.ActualizarMétricas(refrigeracion, aguaConsumidaLitros);
             uiManager.MostrarMensajeTerminal(mensaje);
         }
-        if (nivelAgua != null)          // ← nuevo
+        if (nivelAgua != null)
         {
             nivelAgua.ActualizarNivel(refrigeracion);
         }
@@ -73,14 +73,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Usado por las baldosas de pregunta: registra el costo correspondiente a la opción
-    // elegida (haya sido correcta o no). El avance del nivel YA NO depende de acertar ni de
-    // ningún contador interno: quien decide cuándo se termina el nivel es físicamente la
-    // última baldosa del camino (la que no tiene "siguienteBaldosa"), llamando directamente a
-    // TerminarNivelConExito() en cuanto se responde. Antes, un contador de 3 respuestas
-    // correctas abría la salida aunque todavía quedaran pisos por cruzar; ahora el final
-    // llega exactamente cuando cruzas el último piso, sin importar cuántas acertaste,
-    // mientras te quede refrigeración.
     public void RegistrarRespuesta(float costoRefrigeracion, float litrosAgua, string mensaje, bool esCorrecta)
     {
         RegistrarGastoComputacional(costoRefrigeracion, litrosAgua, mensaje);
@@ -91,7 +83,6 @@ public class GameManager : MonoBehaviour
         RegistrarGastoComputacional(35f, 2.5f, "> Respuesta generada automáticamente.\nMayor consumo computacional detectado por delegar razonamiento.");
     }
 
-    // CORRUTINA: Maneja la caída física en el túnel fucsia y espera 4 segundos antes del Game Over
     private IEnumerator ProcesarColapsoTermico()
     {
         juegoTerminado = true;
@@ -108,7 +99,6 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        // CAMBIAR AQUÍ: De 2f a 4f segundos de caída libre
         yield return new WaitForSeconds(4f);
 
         if (uiManager != null) 
@@ -117,12 +107,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// La llama la última baldosa del camino (la que no tiene "siguienteBaldosa" asignada)
-    /// apenas se responde su pregunta, sin importar si fue correcta o no. Si todavía queda
-    /// refrigeración, dispara el final exitoso; si ya llegó a 0%, el colapso térmico ya se
-    /// está encargando del final malo y este llamado no hace nada.
-    /// </summary>
     public void TerminarNivelConExito()
     {
         if (juegoTerminado) return;
@@ -132,23 +116,24 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // CORRUTINA: Abre el camino fucsia, espera 3 segundos en el destello antes del final de absorción
     private IEnumerator ProcesarTransicionExito()
     {
         juegoTerminado = true;
-        Debug.Log("<color=white>> FIN DEL PROCESAMIENTO: Abriendo salida hacia la oficina.</color>");
+        Debug.Log("> FIN DEL PROCESAMIENTO: Iniciando transición a escena final.");
 
         if (puertaFinalOficina != null)
         {
-            puertaFinalOficina.SetActive(false); // Abre físicamente la compuerta
+            puertaFinalOficina.SetActive(false);
         }
 
-        // Esperamos los 3 segundos dramáticos que planeaste para el fundido/corte
         yield return new WaitForSeconds(3f);
 
-        if (uiManager != null) 
+        // AQUÍ ESTÁ EL CAMBIO: en vez de mostrar la pantalla final vieja,
+        // guarda los datos y carga la escena final1
+        TransicionLuz transicion = FindAnyObjectByType<TransicionLuz>();
+        if (transicion != null)
         {
-            uiManager.MostrarPantallaFinal(true, refrigeracion, aguaConsumidaLitros);
+            transicion.IniciarTransicion(aguaConsumidaLitros, refrigeracion);
         }
     }
 }
