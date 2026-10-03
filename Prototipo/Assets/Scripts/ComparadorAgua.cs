@@ -12,8 +12,10 @@ using UnityEngine.UI;
 ///   esfera es agua EVAPORADA para enfriar los servidores (no vuelve: menos es mejor). La esfera
 ///   crece decisión por decisión mientras se lista lo que gastó cada pregunta, se compara con
 ///   vasos de agua y con lo mínimo/máximo que se podía gastar, y se da un veredicto claro.
+///   Termina con el botón SIGUIENTE.
 /// FASE 2 - A ESCALA REAL: aparece la esfera gigante y, mientras se expande, el contador sube
-///   desde tus litros hasta lo que evaporó entrenar UN modelo grande (~700.000 L).
+///   desde tus litros hasta lo que evaporó entrenar UN modelo grande (~700.000 L), traducido a
+///   vasos de agua y años de agua para una persona. Termina con "VER TU DESEMPEÑO".
 ///
 /// Lo crea FinalManager al acercarse a la esfera (ComparadorAgua.Iniciar).
 /// </summary>
@@ -23,10 +25,11 @@ public class ComparadorAgua : MonoBehaviour
     private const float LitrosEntrenamiento = 700000f; // GPT-3, estimación de Li et al. (2023), "Making AI Less Thirsty"
     private const string FuenteDato = "Estimación de Li et al., 2023 (\"Making AI Less Thirsty\").";
     private const float LitrosPorVaso = 0.25f;
+    private const float LitrosPorPersonaAlDia = 2f;
     // ----------------------------------------------------------------------
 
     private const float Ancho = 1000f;
-    private const float Alto = 1180f;
+    private const float Alto = 1340f;
     private const float MetrosPorPx = 0.0013f;
 
     private static readonly Color Azul = new Color(0.25f, 0.55f, 1f, 1f);
@@ -36,6 +39,9 @@ public class ComparadorAgua : MonoBehaviour
     private Transform gigante;
     private float tamanoGigante;
     private Action iniciarGigante;
+    private Action alTerminar;
+    private RectTransform zonaBotones;
+    private bool botonElegido;
 
     private RectTransform panel;
     private CanvasGroup grupo;
@@ -49,13 +55,15 @@ public class ComparadorAgua : MonoBehaviour
     private bool faseGigante;
     private float escalaInicialGigante = 1f;
 
-    public static ComparadorAgua Iniciar(Transform esfera, Transform gigante, float tamanoGigante, Action iniciarGigante)
+    /// <summary>'alTerminar' se llama al elegir "VER TU DESEMPEÑO" (FinalManager pasa al informe final).</summary>
+    public static ComparadorAgua Iniciar(Transform esfera, Transform gigante, float tamanoGigante, Action iniciarGigante, Action alTerminar)
     {
         ComparadorAgua c = new GameObject("[ComparadorAgua]").AddComponent<ComparadorAgua>();
         c.esfera = esfera;
         c.gigante = gigante;
         c.tamanoGigante = tamanoGigante;
         c.iniciarGigante = iniciarGigante;
+        c.alTerminar = alTerminar;
         return c;
     }
 
@@ -167,12 +175,13 @@ public class ComparadorAgua : MonoBehaviour
             yield return Animar(0.5f, t => textoVeredicto.alpha = t);
         }
 
-        yield return new WaitForSeconds(6f);
+        yield return EsperarBoton("SIGUIENTE");
 
         // ---------- FASE 2: A ESCALA REAL ----------
         yield return Animar(0.4f, t => { textoLineas.alpha = 1f - t; textoVeredicto.alpha = 1f - t; textoEquivalencia.alpha = 1f - t; });
         bloqueBarra.SetActive(false);
-        textoLineas.gameObject.SetActive(false);
+        textoLineas.text = "";
+        textoLineas.alpha = 1f;
 
         textoTitulo.text = "AHORA, A ESCALA REAL";
         textoSubtitulo.text = $"Tu partida evaporó <b>{FormatoLitros(litrosJugador)}</b>.\n" +
@@ -199,8 +208,35 @@ public class ComparadorAgua : MonoBehaviour
         textoEquivalencia.text = $"~{veces:N0} veces tu partida";
         yield return Animar(0.4f, t => textoEquivalencia.alpha = t);
 
+        // El recuadro de abajo traduce los 700.000 L a cosas que se pueden imaginar.
+        float vasosEntrenamiento = LitrosEntrenamiento / LitrosPorVaso;
+        float anosBebiendo = LitrosEntrenamiento / (LitrosPorPersonaAlDia * 365f);
+        textoLineas.text = $"<color=#33E6FF><b>{FormatoLitros(LitrosEntrenamiento)}</b> equivalen a...</color>\n\n" +
+                           $"- unos <b>{vasosEntrenamiento:N0} vasos</b> de agua de 250 ml\n" +
+                           $"- el agua que toma <b>una persona en ~{anosBebiendo:N0} años</b>\n   <size=80%><color=#9FB7FF>(2 litros al día)</color></size>";
+        yield return Animar(0.6f, t => textoLineas.alpha = t);
+
         textoVeredicto.text = "Tu partida fue una gota. Pero millones de personas consultan una IA cada día:\n<b>cada consulta que evitas o haces mejor, cuenta.</b>";
         yield return Animar(0.6f, t => textoVeredicto.alpha = t);
+
+        yield return EsperarBoton("VER TU DESEMPEÑO");
+        alTerminar?.Invoke();
+    }
+
+    /// <summary>Muestra un botón (mirada + A/B/X/Y) y espera a que lo elijan.</summary>
+    private IEnumerator EsperarBoton(string texto)
+    {
+        botonElegido = false;
+        EstiloUI.CrearBoton(zonaBotones, texto, Vector2.zero, new Vector2(560f, 96f), 42f,
+            EstiloUI.BotonNormal, EstiloUI.BotonMirada, EstiloUI.Cian, EstiloUI.Cian, () => botonElegido = true);
+        while (!botonElegido) yield return null;
+
+        for (int i = zonaBotones.childCount - 1; i >= 0; i--)
+        {
+            GameObject boton = zonaBotones.GetChild(i).gameObject;
+            boton.SetActive(false);
+            Destroy(boton);
+        }
     }
 
     private IEnumerator SumarLinea(string lineas, float desde, float hasta, Vector3 escalaBase, float escalaFinal)
@@ -265,27 +301,27 @@ public class ComparadorAgua : MonoBehaviour
         EstiloUI.CrearEsquinas(panel, Ancho, Alto, 70f, 8f, EstiloUI.Cian);
         lineaEscaneo = EstiloUI.CrearImagen(panel, "Escaneo", Vector2.zero, new Vector2(Ancho, 4f), new Color(0.2f, 0.9f, 1f, 0.12f)).rectTransform;
 
-        TextMeshProUGUI etiqueta = EstiloUI.CrearTexto(panel, "// SENSOR DE AGUA EVAPORADA", new Vector2(-150f, 545f), new Vector2(640f, 44f), 26f, new Color(0.2f, 0.9f, 1f, 0.7f), FontStyles.Normal);
+        TextMeshProUGUI etiqueta = EstiloUI.CrearTexto(panel, "// SENSOR DE AGUA EVAPORADA", new Vector2(-150f, 625f), new Vector2(640f, 44f), 26f, new Color(0.2f, 0.9f, 1f, 0.7f), FontStyles.Normal);
         etiqueta.alignment = TextAlignmentOptions.Left;
-        Image gota = EstiloUI.CrearImagen(panel, "Gota", new Vector2(430f, 545f), new Vector2(26f, 26f), EstiloUI.Cian);
+        Image gota = EstiloUI.CrearImagen(panel, "Gota", new Vector2(430f, 625f), new Vector2(26f, 26f), EstiloUI.Cian);
         gota.sprite = EstiloUI.Circulo();
 
-        textoTitulo = EstiloUI.CrearTexto(panel, "TU HUELLA HÍDRICA", new Vector2(0f, 475f), new Vector2(Ancho - 60f, 80f), 60f, EstiloUI.Cian, FontStyles.Bold);
+        textoTitulo = EstiloUI.CrearTexto(panel, "TU HUELLA HÍDRICA", new Vector2(0f, 555f), new Vector2(Ancho - 60f, 80f), 60f, EstiloUI.Cian, FontStyles.Bold);
         textoTitulo.characterSpacing = 5f;
 
         textoSubtitulo = EstiloUI.CrearTexto(panel,
             "Esta esfera es el agua que se <b>EVAPORÓ</b> para enfriar los servidores mientras respondías. No vuelve: <b>menos es mejor</b>.",
-            new Vector2(0f, 360f), new Vector2(Ancho - 90f, 150f), 31f, new Color(1f, 1f, 1f, 0.85f), FontStyles.Normal);
+            new Vector2(0f, 440f), new Vector2(Ancho - 90f, 150f), 31f, new Color(1f, 1f, 1f, 0.85f), FontStyles.Normal);
         textoSubtitulo.enableWordWrapping = true;
         textoSubtitulo.enableAutoSizing = true;
         textoSubtitulo.fontSizeMax = 31f;
         textoSubtitulo.fontSizeMin = 20f;
 
-        textoContador = EstiloUI.CrearTexto(panel, "0.00 L", new Vector2(0f, 220f), new Vector2(Ancho - 60f, 130f), 112f, Color.white, FontStyles.Bold);
-        textoEquivalencia = EstiloUI.CrearTexto(panel, "", new Vector2(0f, 128f), new Vector2(Ancho - 60f, 50f), 34f, EstiloUI.Cian, FontStyles.Normal);
+        textoContador = EstiloUI.CrearTexto(panel, "0.00 L", new Vector2(0f, 300f), new Vector2(Ancho - 60f, 130f), 112f, Color.white, FontStyles.Bold);
+        textoEquivalencia = EstiloUI.CrearTexto(panel, "", new Vector2(0f, 208f), new Vector2(Ancho - 60f, 50f), 34f, EstiloUI.Cian, FontStyles.Normal);
         textoEquivalencia.alpha = 0f;
 
-        Image cajaLineas = EstiloUI.CrearImagen(panel, "CajaLineas", new Vector2(0f, -70f), new Vector2(Ancho - 100f, 290f), new Color(0f, 0f, 0f, 0.3f));
+        Image cajaLineas = EstiloUI.CrearImagen(panel, "CajaLineas", new Vector2(0f, 10f), new Vector2(Ancho - 100f, 290f), new Color(0f, 0f, 0f, 0.3f));
         EstiloUI.CrearImagen(cajaLineas.rectTransform, "Acento", new Vector2(-(Ancho - 100f) * 0.5f, 0f), new Vector2(6f, 290f), Azul);
         textoLineas = EstiloUI.CrearTexto(cajaLineas.rectTransform, "", Vector2.zero, new Vector2(Ancho - 160f, 270f), 32f, Color.white, FontStyles.Normal);
         textoLineas.alignment = TextAlignmentOptions.TopLeft;
@@ -299,29 +335,34 @@ public class ComparadorAgua : MonoBehaviour
         bloqueBarra.transform.SetParent(panel, false);
         RectTransform barra = (RectTransform)bloqueBarra.transform;
         float anchoBarra = Ancho - 140f;
-        etiquetaMin = EstiloUI.CrearTexto(barra, "", new Vector2(-anchoBarra * 0.5f + 150f, -385f), new Vector2(300f, 70f), 24f, new Color(0.4f, 1f, 0.55f, 0.9f), FontStyles.Normal);
+        etiquetaMin = EstiloUI.CrearTexto(barra, "", new Vector2(-anchoBarra * 0.5f + 150f, -305f), new Vector2(300f, 70f), 24f, new Color(0.4f, 1f, 0.55f, 0.9f), FontStyles.Normal);
         etiquetaMin.alignment = TextAlignmentOptions.Left;
-        etiquetaMax = EstiloUI.CrearTexto(barra, "", new Vector2(anchoBarra * 0.5f - 150f, -385f), new Vector2(300f, 70f), 24f, new Color(1f, 0.55f, 0.15f, 0.9f), FontStyles.Normal);
+        etiquetaMax = EstiloUI.CrearTexto(barra, "", new Vector2(anchoBarra * 0.5f - 150f, -305f), new Vector2(300f, 70f), 24f, new Color(1f, 0.55f, 0.15f, 0.9f), FontStyles.Normal);
         etiquetaMax.alignment = TextAlignmentOptions.Right;
-        EstiloUI.CrearImagen(barra, "BarraFondo", new Vector2(0f, -330f), new Vector2(anchoBarra, 16f), AzulSuave);
-        Image relleno = EstiloUI.CrearImagen(barra, "BarraRelleno", new Vector2(-anchoBarra * 0.5f, -330f), new Vector2(0f, 16f), EstiloUI.Cian);
+        EstiloUI.CrearImagen(barra, "BarraFondo", new Vector2(0f, -250f), new Vector2(anchoBarra, 16f), AzulSuave);
+        Image relleno = EstiloUI.CrearImagen(barra, "BarraRelleno", new Vector2(-anchoBarra * 0.5f, -250f), new Vector2(0f, 16f), EstiloUI.Cian);
         barraRelleno = relleno.rectTransform;
         barraRelleno.pivot = new Vector2(0f, 0.5f);
         GameObject marcadorGO = new GameObject("Marcador", typeof(RectTransform));
         marcadorGO.transform.SetParent(barra, false);
         marcador = (RectTransform)marcadorGO.transform;
-        marcador.anchoredPosition = new Vector2(-anchoBarra * 0.5f, -330f);
+        marcador.anchoredPosition = new Vector2(-anchoBarra * 0.5f, -250f);
         Image rombo = EstiloUI.CrearImagen(marcador, "Rombo", Vector2.zero, new Vector2(30f, 30f), Color.white);
         rombo.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
         EstiloUI.CrearTexto(marcador, "TÚ", new Vector2(0f, 38f), new Vector2(80f, 34f), 24f, Color.white, FontStyles.Bold);
         bloqueBarra.SetActive(false);
 
-        textoVeredicto = EstiloUI.CrearTexto(panel, "", new Vector2(0f, -505f), new Vector2(Ancho - 90f, 150f), 34f, Color.white, FontStyles.Normal);
+        textoVeredicto = EstiloUI.CrearTexto(panel, "", new Vector2(0f, -425f), new Vector2(Ancho - 90f, 150f), 34f, Color.white, FontStyles.Normal);
         textoVeredicto.enableWordWrapping = true;
         textoVeredicto.enableAutoSizing = true;
         textoVeredicto.fontSizeMax = 34f;
         textoVeredicto.fontSizeMin = 22f;
         textoVeredicto.alpha = 0f;
+
+        GameObject zona = new GameObject("Botones", typeof(RectTransform));
+        zona.transform.SetParent(panel, false);
+        zonaBotones = (RectTransform)zona.transform;
+        zonaBotones.anchoredPosition = new Vector2(0f, -585f);
     }
 
     private static IEnumerator Animar(float duracion, Action<float> aplicar)

@@ -208,12 +208,8 @@ public class FinalManager : MonoBehaviour
             {
                 esferaGigante.transform.localScale = escalaObjetivo;
                 esferaGiganteCreciendo = false;
-
-                if (!finalActivado)
-                {
-                    finalActivado = true;
-                    StartCoroutine(EsperarYActivarFinal());
-                }
+                // El paso al informe final ya no es automático: lo da el botón "VER TU DESEMPEÑO"
+                // del sensor de agua (ComparadorAgua).
             }
         }
     }
@@ -236,20 +232,14 @@ public class FinalManager : MonoBehaviour
                 if (esferaGigante == null) return;
                 esferaGigante.SetActive(true);
                 esferaGiganteCreciendo = true;
+            },
+            () =>
+            {
+                // "VER TU DESEMPEÑO": negro -> informe final -> mapa de decisiones.
+                if (finalActivado) return;
+                finalActivado = true;
+                StartCoroutine(TransicionAVacioNegro());
             });
-
-        // Sin esfera gigante en la escena, el final sigue igual tras unos segundos.
-        if (esferaGigante == null) StartCoroutine(FinalSinGigante());
-    }
-
-    private IEnumerator FinalSinGigante()
-    {
-        yield return new WaitForSeconds(20f);
-        if (!finalActivado)
-        {
-            finalActivado = true;
-            StartCoroutine(EsperarYActivarFinal());
-        }
     }
 
     private IEnumerator EsperarYActivarFinal()
