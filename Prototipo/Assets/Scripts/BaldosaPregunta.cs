@@ -242,8 +242,13 @@ public class BaldosaPregunta : MonoBehaviour
             // La última caída permitida termina el juego (pasa a la escena final): no se reaparece.
             bool puedeReaparecer = gm.RegistrarCaida();
             DatosFinales.caidas = gm.Caidas;
-            if (!puedeReaparecer) return;
+            if (!puedeReaparecer)
+            {
+                DatosFinales.RegistrarCaida(0f, 0f); // la última caída: también sale en el mapa, sin costo extra
+                return;
+            }
             DatosFinales.refriPerdidaPorCaidas += costoCaidaRefri;
+            DatosFinales.RegistrarCaida(costoCaidaRefri, costoCaidaAgua);
 
             int quedan = gm.caidasMaximas - gm.Caidas;
             string aviso = $"{mensajeCaida}\n> Caídas: {gm.Caidas}/{gm.caidasMaximas}" +

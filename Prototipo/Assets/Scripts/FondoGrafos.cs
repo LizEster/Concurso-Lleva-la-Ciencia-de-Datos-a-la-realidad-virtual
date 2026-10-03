@@ -54,12 +54,23 @@ public class FondoGrafos : MonoBehaviour
     private float opacidadGlobal;   // para aparecer / desaparecer
     private bool saliendo;
 
-    /// <summary>Crea el fondo como hijo de 'padre'.</summary>
+    /// <summary>Crea el fondo (turquesa, como el menú) como hijo de 'padre'.</summary>
     public static FondoGrafos Crear(Transform padre)
     {
+        return Crear(padre, new Color(0.2f, 0.9f, 1f, 1f));
+    }
+
+    /// <summary>
+    /// Crea el fondo con el color que quieras. Si 'padre' es null queda suelto en la escena:
+    /// así puede seguir existiendo (y desvanecerse solo) aunque se destruya quien lo creó.
+    /// </summary>
+    public static FondoGrafos Crear(Transform padre, Color color)
+    {
         GameObject go = new GameObject("FondoGrafos");
-        go.transform.SetParent(padre, false);
-        return go.AddComponent<FondoGrafos>();
+        if (padre != null) go.transform.SetParent(padre, false);
+        FondoGrafos fondo = go.AddComponent<FondoGrafos>();
+        fondo.colorBase = color;
+        return fondo;
     }
 
     /// <summary>Lo apaga con un fundido y se destruye solo al terminar.</summary>

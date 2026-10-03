@@ -54,11 +54,19 @@ public class ComparadorAgua : MonoBehaviour
     private float litrosJugador;
     private bool faseGigante;
     private float escalaInicialGigante = 1f;
+    private Vector3 escalaBaseEsfera;
 
-    /// <summary>'alTerminar' se llama al elegir "VER TU DESEMPEÑO" (FinalManager pasa al informe final).</summary>
-    public static ComparadorAgua Iniciar(Transform esfera, Transform gigante, float tamanoGigante, Action iniciarGigante, Action alTerminar)
+    /// <summary>La esfera pequeña arranca (desde que carga la escena) a este porcentaje de su tamaño real.</summary>
+    public const float FactorInicial = 0.15f;
+
+    /// <summary>
+    /// 'alTerminar' se llama al elegir "VER TU DESEMPEÑO" (FinalManager pasa al informe final).
+    /// 'escalaBaseEsfera' es el tamaño REAL de la esfera pequeña (antes de achicarla a FactorInicial).
+    /// </summary>
+    public static ComparadorAgua Iniciar(Transform esfera, Transform gigante, float tamanoGigante, Action iniciarGigante, Action alTerminar, Vector3 escalaBaseEsfera = default)
     {
         ComparadorAgua c = new GameObject("[ComparadorAgua]").AddComponent<ComparadorAgua>();
+        c.escalaBaseEsfera = escalaBaseEsfera;
         c.esfera = esfera;
         c.gigante = gigante;
         c.tamanoGigante = tamanoGigante;
@@ -122,9 +130,9 @@ public class ComparadorAgua : MonoBehaviour
         float posicion = maximo > minimo ? Mathf.Clamp01((litrosJugador - minimo) / (maximo - minimo)) : 0f;
 
         // La esfera empieza chiquita y crece hasta un tamaño que depende de cuánto gastaste.
-        Vector3 escalaBase = esfera != null ? esfera.localScale : Vector3.one;
+        Vector3 escalaBase = escalaBaseEsfera.sqrMagnitude > 0.0001f ? escalaBaseEsfera : (esfera != null ? esfera.localScale : Vector3.one);
         float escalaFinal = Mathf.Lerp(0.6f, 1.8f, posicion);
-        if (esfera != null) esfera.localScale = escalaBase * 0.15f;
+        if (esfera != null) esfera.localScale = escalaBase * FactorInicial;
 
         yield return Animar(0.6f, t => grupo.alpha = t);
 
@@ -247,7 +255,7 @@ public class ComparadorAgua : MonoBehaviour
             float litros = Mathf.Lerp(desde, hasta, t);
             textoContador.text = FormatoLitros(litros);
             if (esfera != null && litrosJugador > 0f)
-                esfera.localScale = escalaBase * Mathf.Lerp(0.15f, escalaFinal, Mathf.Clamp01(litros / litrosJugador));
+                esfera.localScale = escalaBase * Mathf.Lerp(FactorInicial, escalaFinal, Mathf.Clamp01(litros / litrosJugador));
         });
         yield return new WaitForSeconds(0.25f);
     }

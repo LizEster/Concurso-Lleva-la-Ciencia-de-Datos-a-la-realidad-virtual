@@ -39,6 +39,7 @@ public class InformeFinal : MonoBehaviour
     private RectTransform zonaBotones;
     private Image indicadorSeguir;
     private bool eligioContinuar;
+    private FondoGrafos fondoGrafos;
 
     public static void Mostrar(string[] mensajes, float agua, float refrigeracion)
     {
@@ -51,6 +52,11 @@ public class InformeFinal : MonoBehaviour
     void Start()
     {
         DefinirTema();
+
+        // Red de nodos de fondo, del color del resultado (verde, amarillo, naranja, rojo o morado).
+        // Queda suelta en la escena para poder desvanecerse sola cuando pasamos al mapa.
+        fondoGrafos = FondoGrafos.Crear(null, acento);
+
         Construir();
         EstiloUI.ColocarDelante(panel, Distancia, 0.05f);
         StartCoroutine(Secuencia());
@@ -186,6 +192,17 @@ public class InformeFinal : MonoBehaviour
     {
         LimpiarBotones();
         yield return Animar(0.5f, t => grupo.alpha = 1f - t);
+
+        // El mapa vive dentro de la escena de tu final (naturaleza, basura, seca...). Si esa
+        // escena todavía no existe en el build, se muestra aquí mismo.
+        string escena = EscenaFinalSegunResultado.Nombre(MapaDecisiones.FinalReal());
+        if (!string.IsNullOrEmpty(escena) && Application.CanStreamedLevelBeLoaded(escena))
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadScene(escena);
+            yield break;
+        }
+
+        if (fondoGrafos != null) fondoGrafos.Desvanecer(0.8f);
         MapaDecisiones.Mostrar();
         Destroy(gameObject);
     }

@@ -30,6 +30,8 @@ public class MapaDecisiones : MonoBehaviour
     private const float BajarCentro = 0.15f;    // el arco va un poco bajo la línea de los ojos
     private const float YDetalle = 410f;        // px: el detalle va arriba del camino
     private const string EscenaJuego = "Nivel_Principal";
+    private const int TotalPreguntas = 5;       // baldosas del túnel
+    private const float CostoMinimo = 5f;       // lo que cuesta acertar una pregunta (% de refrigeración)
 
     private static readonly Color ColorAcierto = new Color(0.25f, 1f, 0.45f, 1f);
     private static readonly Color ColorError = new Color(1f, 0.3f, 0.3f, 1f);
@@ -292,17 +294,126 @@ public class MapaDecisiones : MonoBehaviour
 
                 string extra = op == d.correcta ? " <color=#40FF73>(era la correcta)</color>" : "";
                 string notaCaidas = finalReal == Final.Caidas ? "\n<i>(Ojo: igual te habrías caído las mismas veces.)</i>" : "";
+                if (finalAlt == Final.Colapso && finalReal == Final.Colapso)
+                    notaCaidas += "\n<i>Cambiar SOLO esta decisión no alcanzaba: el resto ya había gastado demasiado.</i>";
                 string infoAlt = $"<b>Pregunta {i + 1}</b>: si hubieras elegido <b>\"{d.Texto(op)}\"</b>{extra}...\n" +
                                  $"terminabas con ~{Mathf.Clamp(refriAlt, 0f, 100f):0}% de refrigeración: final <b><color=#{ColorUtility.ToHtmlStringRGB(c)}>{NombreDe(finalAlt)}</color></b>." + notaCaidas;
-                col.nodosRamas.Add(CrearNodo(col, posAlt, 80f, c, false, "", NombreDe(finalAlt), c, infoAlt));
+                col.nodosRamas.Add(CrearNodo(col, posAlt, 80f, c, false, "", $"{NombreDe(finalAlt)} ~{Mathf.Clamp(refriAlt, 0f, 100f):0}%", c, infoAlt));
             }
         }
 
+        ConstruirCaidas(posNodo);
+        string notaHeroe = ConstruirNoRetorno(posNodo, finalReal);
+
         Columna ultima = columnas[columnas.Count - 1];
         string infoFinal = $"<b>TU FINAL: <color=#{ColorUtility.ToHtmlStringRGB(colorCamino)}>{NombreDe(finalReal)}</color></b>\n" +
-                           $"Refrigeración restante: {DatosFinales.refrigeracionRestante:0}%  ·  Agua evaporada: {DatosFinales.aguaConsumida:0.00} L  ·  Caídas: {DatosFinales.caidas}";
+                           $"Refrigeración restante: {DatosFinales.refrigeracionRestante:0}%  ·  Agua evaporada: {DatosFinales.aguaConsumida:0.00} L  ·  Caídas: {DatosFinales.caidas}" + notaHeroe;
         nodoFinal = CrearNodo(ultima, posNodo, 210f, colorCamino, false, "", "TU FINAL\n" + NombreDe(finalReal), colorCamino, infoFinal);
         ultima.nodo = nodoFinal;
+
+        ConstruirIdeal(posNodo, finalReal);
+    }
+
+    /// <summary>
+    /// "Punto de no retorno": la primera pregunta después de la cual, ni acertando TODO lo que
+    /// faltaba, se evitaba el colapso. Pone una insignia "!" en esa pregunta y devuelve el texto
+    /// para el nodo TU FINAL (reconoce a quien siguió intentando acertar después de eso).
+    /// </summary>
+    private string ConstruirNoRetorno(Vector2 posNodo, Final finalReal)
+    {
+        if (finalReal != Final.Colapso) return "";
+
+        List<DatosFinales.Decision> dec = DatosFinales.decisiones;
+        int n = dec.Count;
+        int p = -1;
+        for (int i = 1; i <= n; i++)
+        {
+            float r = DatosFinales.refrigeracionInicial;
+            for (int k = 0; k < i; k++) r -= dec[k].CostoRefri(dec[k].elegida);
+            foreach (DatosFinales.Caida c in DatosFinales.registroCaidas) if (c.decisionesPrevias <= i) r -= c.refri;
+
+            float mejorPosible = r - CostoMinimo * Mathf.Max(0, TotalPreguntas - i);
+            if (mejorPosible <= 0f) { p = i; break; }
+        }
+        if (p < 1) return "";
+
+        string infoBadge = $"<b>PUNTO DE NO RETORNO</b>: después de la <b>pregunta {p}</b>, ni acertando todo lo que faltaba se podía evitar el colapso.";
+        Columna col = columnas[p];
+        col.nodosRamas.Add(CrearNodo(col, posNodo + new Vector2(-80f, 80f), 70f, new Color(0.92f, 0.92f, 0.97f, 1f), true, "!", "", Color.white, infoBadge));
+
+        int despues = n - p;
+        int bien = 0;
+        for (int k = p; k < n; k++) if (dec[k].elegida == dec[k].correcta) bien++;
+
+        string nota = $"\n<color=#FFFFFF>Desde la P{p} el colapso ya era inevitable.</color>";
+        if (despues > 0 && bien > 0) nota += $" Aun así acertaste <b>{bien} de {despues}</b> después de eso: ¡seguir intentándolo contó!";
+        else if (despues > 0) nota += " Aun así seguiste intentando: ¡eso cuenta!";
+        return nota;
+    }
+
+    /// <summary>El mejor final posible (todo bien y sin caídas), para que se vea que sí había un camino.</summary>
+    private void ConstruirIdeal(Vector2 posNodo, Final finalReal)
+    {
+        List<DatosFinales.Decision> dec = DatosFinales.decisiones;
+        float r = DatosFinales.refrigeracionInicial;
+        foreach (DatosFinales.Decision d in dec)
+        {
+            float menor = float.MaxValue;
+            for (int op = 0; op < d.opciones.Length && op < 3; op++) menor = Mathf.Min(menor, d.CostoRefri(op));
+            r -= menor;
+        }
+        r -= CostoMinimo * Mathf.Max(0, TotalPreguntas - dec.Count);
+
+        // Si ya hiciste el camino perfecto, no hace falta repetirlo.
+        if (finalReal == Final.Optimo && Mathf.Abs(r - DatosFinales.refrigeracionRestante) < 0.5f) return;
+
+        Final f = FinalPorRefrigeracion(r);
+        Color c = ColorDe(f);
+        Columna col = columnas[columnas.Count - 1];
+        Vector2 pos = posNodo + new Vector2(0f, -340f);
+        col.ramas.Add(CrearLinea(col.canvas, posNodo, pos, 5f, new Color(c.r, c.g, c.b, 0.7f)));
+
+        string info = $"<b>CAMINO IDEAL</b>: acertando todas las preguntas y sin caerte, habrías terminado con ~{Mathf.Clamp(r, 0f, 100f):0}% de refrigeración: final <b><color=#{ColorUtility.ToHtmlStringRGB(c)}>{NombreDe(f)}</color></b>.";
+        col.nodosRamas.Add(CrearNodo(col, pos, 100f, c, false, "", $"IDEAL\n{NombreDe(f)} ~{Mathf.Clamp(r, 0f, 100f):0}%", c, info));
+    }
+
+    /// <summary>
+    /// Las caídas al vacío, en morado: una insignia pegada al nodo del tramo donde te caíste
+    /// (la columna P{k} = "en el camino hacia la pregunta k"; la última = hacia el final).
+    /// </summary>
+    private void ConstruirCaidas(Vector2 posNodo)
+    {
+        if (DatosFinales.registroCaidas.Count == 0) return;
+
+        Color morado = ColorDe(Final.Caidas);
+
+        // Agrupa por columna (puede haber más de una caída en el mismo tramo).
+        SortedDictionary<int, List<DatosFinales.Caida>> porColumna = new SortedDictionary<int, List<DatosFinales.Caida>>();
+        foreach (DatosFinales.Caida c in DatosFinales.registroCaidas)
+        {
+            int idx = Mathf.Clamp(c.decisionesPrevias + 1, 1, columnas.Count - 1);
+            if (!porColumna.ContainsKey(idx)) porColumna[idx] = new List<DatosFinales.Caida>();
+            porColumna[idx].Add(c);
+        }
+
+        foreach (KeyValuePair<int, List<DatosFinales.Caida>> par in porColumna)
+        {
+            Columna col = columnas[par.Key];
+            List<DatosFinales.Caida> lista = par.Value;
+            bool enElFinal = par.Key == columnas.Count - 1;
+
+            float refri = 0f, agua = 0f;
+            foreach (DatosFinales.Caida c in lista) { refri += c.refri; agua += c.agua; }
+
+            string donde = enElFinal ? "en el camino hacia el final" : $"en el camino hacia la <b>pregunta {par.Key}</b>";
+            string veces = lista.Count == 1 ? "una vez" : $"{lista.Count} veces";
+            string info = $"<b><color=#{ColorUtility.ToHtmlStringRGB(morado)}>CAÍDA</color></b>: te caíste al vacío <b>{veces}</b> {donde}.\n" +
+                          $"Reconstruir el camino costó <b>-{refri:0}%</b> de refrigeración y <b>{agua:0.00} L</b> de agua.";
+
+            float desfase = enElFinal ? 125f : 80f;
+            Vector2 pos = posNodo + new Vector2(desfase, desfase);
+            col.nodosRamas.Add(CrearNodo(col, pos, 70f, morado, false, lista.Count == 1 ? "1" : $"x{lista.Count}", "", morado, info));
+        }
     }
 
     private void ConstruirTitulo()

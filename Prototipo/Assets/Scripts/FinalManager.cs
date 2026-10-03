@@ -57,6 +57,7 @@ public class FinalManager : MonoBehaviour
     private float aguaFinal;
     private float refrigeracionFinal;
     private string textoEsferaPequena;
+    private Vector3 escalaOriginalEsfera = Vector3.one; // tamaño real de la esfera pequeña (en la escena)
     private string textoEsferaGrande;
 
     void Start()
@@ -70,6 +71,14 @@ public class FinalManager : MonoBehaviour
 
         // Preparar los textos según el nivel de refrigeración
         PrepararTextos(agua, refrigeracion);
+
+        // La esfera pequeña se ve chiquita desde que carga la escena (así no "salta" al acercarte).
+        // ComparadorAgua la hace crecer desde ahí mientras sumas los litros.
+        if (esferaAgua != null)
+        {
+            escalaOriginalEsfera = esferaAgua.transform.localScale;
+            esferaAgua.transform.localScale = escalaOriginalEsfera * ComparadorAgua.FactorInicial;
+        }
 
         if (esferaGigante != null)
         {
@@ -239,7 +248,8 @@ public class FinalManager : MonoBehaviour
                 if (finalActivado) return;
                 finalActivado = true;
                 StartCoroutine(TransicionAVacioNegro());
-            });
+            },
+            escalaOriginalEsfera);
     }
 
     private IEnumerator EsperarYActivarFinal()

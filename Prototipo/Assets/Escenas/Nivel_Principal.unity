@@ -672,20 +672,28 @@ PrefabInstance:
       value: Wall Corner (1)
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.95500964
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.4435
+      value: 0.45134994
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.0177
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 3.13
+      value: 3.759
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -12.8465
+      value: -12.878
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -40.15
+      value: -38.54
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1851,7 +1859,7 @@ Transform:
   m_GameObject: {fileID: 202346050}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9999995, z: -0, w: 0.0009660494}
-  m_LocalPosition: {x: -0.18, y: -12.4800005, z: -41.670002}
+  m_LocalPosition: {x: -0.18, y: -12.4800005, z: -41.957}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -16239,6 +16247,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1990561850}
     m_Modifications:
+    - target: {fileID: -7244525831969050960, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -18.96
+      objectReference: {fileID: 0}
     - target: {fileID: 8128668236925612103, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
       propertyPath: m_Name
       value: matrix_void
@@ -18829,20 +18841,28 @@ PrefabInstance:
       value: Wall Corner
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.1692722
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.4553
+      value: 0.5840588
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.3267311
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -3.03
+      value: -4.1183
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -12.8347
+      value: -13.35
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -39.95
+      value: -37.7631
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalRotation.w
