@@ -317,5 +317,8 @@ public class ControladorActo1 : MonoBehaviour
 
         CongelarJugador(false);
         if (botGuia != null) botGuia.enPausa = false;
+
+        // Recién ahora que el jugador se puede mover aparece la línea del piso.
+        if (SenializacionRuta.Instancia != null) SenializacionRuta.Instancia.MostrarLinea(true);
     }
 }

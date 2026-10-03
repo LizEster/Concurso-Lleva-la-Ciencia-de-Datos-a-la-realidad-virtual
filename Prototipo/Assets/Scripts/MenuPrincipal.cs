@@ -52,6 +52,7 @@ public class MenuPrincipal : MonoBehaviour
     private RectTransform menu;
     private GameObject pantallaInicio, pantallaCreditos, pantallaInstrucciones;
     private TextMeshProUGUI titulo;
+    private FondoGrafos fondoGrafos;
     private RectTransform lineaEscaneo;
 
     private RectTransform canvasIntro;
@@ -95,6 +96,7 @@ public class MenuPrincipal : MonoBehaviour
         if (movimiento != null) movimiento.enabled = false;
 
         CrearVelo();
+        fondoGrafos = FondoGrafos.Crear(transform);   // red de nodos turquesa de fondo
         CrearMenu();
         MostrarPantalla(pantallaInicio);
         ColocarMenu();
@@ -173,6 +175,7 @@ public class MenuPrincipal : MonoBehaviour
     private IEnumerator Intro()
     {
         menu.gameObject.SetActive(false);
+        if (fondoGrafos != null) fondoGrafos.Desvanecer(0.8f);
 
         ControladorActo1 acto1 = UnityEngine.Object.FindAnyObjectByType<ControladorActo1>();
         string texto = acto1 != null && !string.IsNullOrEmpty(acto1.textoPantallaInicial) ? acto1.textoPantallaInicial : TextoIntroRespaldo;

@@ -43,6 +43,7 @@ public class SenializacionRuta : MonoBehaviour
 
     private BaldosaPregunta[] baldosas;
     private bool yaLlegoADestino;
+    private bool lineaVisible = true; // Start() la apaga si hay un ControladorActo1 (se muestra tras el diálogo)
     private LineRenderer linea;
     private Material materialLinea;
     private float tiempoDesdeUltimoCalculo;
@@ -61,8 +62,23 @@ public class SenializacionRuta : MonoBehaviour
         if (Instancia == this) Instancia = null;
     }
 
+    /// <summary>
+    /// Muestra u oculta la línea del piso. La ruta se sigue calculando aunque la línea esté
+    /// oculta, porque el robot guía usa ese mismo camino.
+    /// </summary>
+    public void MostrarLinea(bool visible)
+    {
+        lineaVisible = visible;
+        if (!visible) OcultarLinea();
+        else if (jugador != null) ActualizarRuta();
+    }
+
     void Start()
     {
+        // En el nivel con intro, la línea recién aparece cuando el jugador ya se puede mover
+        // (ControladorActo1 la enciende al terminar el diálogo con el robot).
+        if (FindAnyObjectByType<ControladorActo1>() != null) lineaVisible = false;
+
         if (jugador == null)
         {
             GameObject playerObjeto = GameObject.FindGameObjectWithTag("Player");
@@ -207,6 +223,11 @@ public class SenializacionRuta : MonoBehaviour
         }
 
         avisoSinRuta = false;
+        if (!lineaVisible)
+        {
+            OcultarLinea();
+            return;
+        }
         ConstruirPuntosLinea();
         DibujarLinea();
     }
