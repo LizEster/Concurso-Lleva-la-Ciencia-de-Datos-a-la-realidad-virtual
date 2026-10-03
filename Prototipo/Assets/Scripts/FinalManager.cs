@@ -53,6 +53,7 @@ public class FinalManager : MonoBehaviour
     private bool esferaGiganteCreciendo = false;
     private bool finalActivado = false;
     private string[] mensajesFinales;
+    private ComparadorAgua comparadorAgua;
     private float aguaFinal;
     private float refrigeracionFinal;
     private string textoEsferaPequena;
@@ -221,40 +222,40 @@ public class FinalManager : MonoBehaviour
     {
         esferaActivada = true;
 
-        // Mostrar mensaje de la esfera pequeña
-        if (textoEsfera != null)
-        {
-            textoEsfera.gameObject.SetActive(true);
-            textoEsfera.text = textoEsferaPequena;
-        }
+        // El texto 3D viejo se reemplaza por el "sensor de huella hídrica" (ComparadorAgua):
+        // explica qué es esta agua, la hace crecer según tus decisiones y, cuando corresponde,
+        // hace aparecer la esfera gigante (un entrenamiento real de IA) llamando a este callback.
+        if (textoEsfera != null) textoEsfera.gameObject.SetActive(false);
 
-        StartCoroutine(EsperarYMostrarGigante());
+        comparadorAgua = ComparadorAgua.Iniciar(
+            esferaAgua != null ? esferaAgua.transform : null,
+            esferaGigante != null ? esferaGigante.transform : null,
+            tamanoFinalGigante,
+            () =>
+            {
+                if (esferaGigante == null) return;
+                esferaGigante.SetActive(true);
+                esferaGiganteCreciendo = true;
+            });
+
+        // Sin esfera gigante en la escena, el final sigue igual tras unos segundos.
+        if (esferaGigante == null) StartCoroutine(FinalSinGigante());
     }
 
-    private IEnumerator EsperarYMostrarGigante()
+    private IEnumerator FinalSinGigante()
     {
-        yield return new WaitForSeconds(4f);
-
-        if (esferaGigante != null)
+        yield return new WaitForSeconds(20f);
+        if (!finalActivado)
         {
-            esferaGigante.SetActive(true);
-
-            // Cambiar el texto al mensaje de la esfera grande
-            if (textoEsfera != null)
-            {
-                textoEsfera.text = textoEsferaGrande;
-            }
-
-            // Espera 3 segundos para que el jugador la vea antes de que crezca
-            yield return new WaitForSeconds(3f);
-
-            esferaGiganteCreciendo = true;
+            finalActivado = true;
+            StartCoroutine(EsperarYActivarFinal());
         }
     }
 
     private IEnumerator EsperarYActivarFinal()
     {
-        yield return new WaitForSeconds(pausaAntesDeNegro);
+        // Un poco más de pausa que antes: hay que alcanzar a leer el cierre del sensor de agua.
+        yield return new WaitForSeconds(pausaAntesDeNegro + 4f);
         StartCoroutine(TransicionAVacioNegro());
     }
 
@@ -267,6 +268,7 @@ public class FinalManager : MonoBehaviour
 
         // Ocultar el texto de la esfera (y la UI vieja de la pantalla final, que ya no se usa)
         if (textoEsfera != null) textoEsfera.gameObject.SetActive(false);
+        if (comparadorAgua != null) comparadorAgua.Ocultar();
         if (textoFinal != null) textoFinal.gameObject.SetActive(false);
         if (panelNegro != null) panelNegro.gameObject.SetActive(false);
 
