@@ -121,7 +121,7 @@ public class PunteroMirada : MonoBehaviour
         // El anillo se enciende cuando estás apuntando a algo: ahí un botón lo elige.
         anillo.fillAmount = actual != null ? 1f : 0f;
 
-        if (actual != null && EntradaVR.ConfirmarPresionado())
+        if (actual != null && !actual.soloMirar && EntradaVR.ConfirmarPresionado())
         {
             OpcionMirable elegida = actual;
             actual = null;

@@ -50,6 +50,7 @@ public class GameManager : MonoBehaviour
         if (Instance == null) 
         {
             Instance = this;
+            DatosFinales.Reiniciar(refrigeracion); // partida nueva: se limpia el registro de decisiones
         }
         else 
         {
@@ -101,7 +102,7 @@ public class GameManager : MonoBehaviour
 
     public void UsarBotonIA()
     {
-        RegistrarGastoComputacional(35f, 2.5f, "> Respuesta generada automáticamente.\nMayor consumo computacional detectado por delegar razonamiento.");
+        RegistrarGastoComputacional(DatosFinales.CostoIARefri, DatosFinales.CostoIAAgua, "> Respuesta generada automáticamente.\nMayor consumo computacional detectado por delegar razonamiento.");
     }
 
     /// <summary>

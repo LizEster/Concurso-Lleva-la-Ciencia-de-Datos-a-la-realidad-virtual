@@ -3324,7 +3324,7 @@ MonoBehaviour:
   duracionAvisoRobot: 4
   fuenteAudioBip: {fileID: 0}
   clipBip: {fileID: 0}
-  tiempoParaResponder: 30
+  tiempoParaResponder: 20
   alturaCaidaParaReaparecer: 6
   costoCaidaRefri: 20
   costoCaidaAgua: 1
@@ -4702,7 +4702,7 @@ MonoBehaviour:
   duracionAvisoRobot: 4
   fuenteAudioBip: {fileID: 0}
   clipBip: {fileID: 0}
-  tiempoParaResponder: 30
+  tiempoParaResponder: 20
   alturaCaidaParaReaparecer: 6
   costoCaidaRefri: 20
   costoCaidaAgua: 1
@@ -7666,7 +7666,7 @@ MonoBehaviour:
   duracionAvisoRobot: 4
   fuenteAudioBip: {fileID: 0}
   clipBip: {fileID: 0}
-  tiempoParaResponder: 30
+  tiempoParaResponder: 20
   alturaCaidaParaReaparecer: 6
   costoCaidaRefri: 20
   costoCaidaAgua: 1
@@ -9222,6 +9222,12 @@ MonoBehaviour:
   clipBip: {fileID: 8300000, guid: a0312cedb9e962053820f1c01423069e, type: 3}
   probabilidadBipExtra: 0.04
   tamanoFuenteOpciones: 52
+  posicionTrasDialogo: {x: -0.18, y: -12.48, z: -46.39}
+  rotacionYTrasDialogo: -540.1
+  puntoTrasDialogo: {fileID: 0}
+  duracionFundidoANegro: 1
+  segundosEnNegro: 0.6
+  duracionFundidoDesdeNegro: 1.5
   textoFinalTrasDialogo: "S\xEDgueme..."
   guionRobot:
   - textoRobot: "\xA1Al fin alguien aqu\xED! No s\xE9 c\xF3mo entraste, pero has
@@ -10996,7 +11002,7 @@ MonoBehaviour:
   duracionAvisoRobot: 4
   fuenteAudioBip: {fileID: 0}
   clipBip: {fileID: 0}
-  tiempoParaResponder: 30
+  tiempoParaResponder: 20
   alturaCaidaParaReaparecer: 6
   costoCaidaRefri: 20
   costoCaidaAgua: 1
@@ -15407,6 +15413,7 @@ MonoBehaviour:
   construirCuerpoAutomatico: 1
   materialCuerpo: {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
   colorLuz: {r: 0, g: 1, b: 1, a: 1}
+  enPausa: 0
   estaEnfermo: 1
   colorLuzEnfermo: {r: 1, g: 0.15, b: 0.1, a: 1}
 --- !u!135 &1792959875
@@ -18238,6 +18245,16 @@ MonoBehaviour:
   nivelAgua: {fileID: 2066303128}
   sueloTunelFucsia: {fileID: 1798187101}
   puertaFinalOficina: {fileID: 2041251414}
+  caidasMaximas: 3
+  segundosMenosPorCaida: 5
+  tiempoMinimoParaResponder: 5
+  segundosDeCaidaFinal: 2
+  mensajeSinCaidas: "<color=red>> ERROR 404: Usuario perdido en el vac\xEDo.</color>\n>
+    Demasiadas ca\xEDdas: el sistema perdi\xF3 tu rastro."
+  segundosDeCaida: 3.5
+  escenaFinal: final1
+  mensajeColapso: "<color=red>> ERROR 508: Reservas agotadas. Colapso t\xE9rmico.</color>\n>
+    El puente de datos se desintegra..."
 --- !u!114 &2066303127
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -240,7 +240,10 @@ public class BaldosaPregunta : MonoBehaviour
             GameManager gm = GameManager.Instance;
 
             // La última caída permitida termina el juego (pasa a la escena final): no se reaparece.
-            if (!gm.RegistrarCaida()) return;
+            bool puedeReaparecer = gm.RegistrarCaida();
+            DatosFinales.caidas = gm.Caidas;
+            if (!puedeReaparecer) return;
+            DatosFinales.refriPerdidaPorCaidas += costoCaidaRefri;
 
             int quedan = gm.caidasMaximas - gm.Caidas;
             string aviso = $"{mensajeCaida}\n> Caídas: {gm.Caidas}/{gm.caidasMaximas}" +
@@ -398,6 +401,7 @@ public class BaldosaPregunta : MonoBehaviour
         respondida = true;
         jugadorEncima = false;
         cronometroCorriendo = false;
+        DatosFinales.RegistrarDecision(enunciadoPregunta, textoOpciones, DatosFinales.OpcionIA, indiceCorrecta, costoRefri, costoAgua);
 
         if (panelHolograma != null) panelHolograma.Ocultar();
         else PanelOpcionesMirada.Ocultar();
@@ -422,6 +426,7 @@ public class BaldosaPregunta : MonoBehaviour
         respondida = true;
         jugadorEncima = false;
         cronometroCorriendo = false;
+        DatosFinales.RegistrarDecision(enunciadoPregunta, textoOpciones, indiceOpcion, indiceCorrecta, costoRefri, costoAgua);
 
         if (panelHolograma != null) panelHolograma.Ocultar();
         else PanelOpcionesMirada.Ocultar();

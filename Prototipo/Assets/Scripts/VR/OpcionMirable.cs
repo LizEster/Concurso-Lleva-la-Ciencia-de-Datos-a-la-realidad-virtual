@@ -22,6 +22,12 @@ public class OpcionMirable : MonoBehaviour
     /// <summary>Qué hacer cuando se elige. Lo asigna quien crea la opción.</summary>
     public Action alElegir;
 
+    /// <summary>Se llama con true al empezar a mirarla y con false al dejar de mirarla.</summary>
+    public Action<bool> alMirar;
+
+    /// <summary>Si es true, sólo reacciona a la mirada (se ilumina, avisa con 'alMirar') y los botones no la "gastan".</summary>
+    public bool soloMirar;
+
     /// <summary>False mientras no se pueda elegir (ya se eligió, el panel se está ocultando...).</summary>
     public bool Habilitada { get; private set; } = true;
 
@@ -120,12 +126,13 @@ public class OpcionMirable : MonoBehaviour
     {
         if (!Habilitada) return;
         AplicarAspecto(mirando);
+        alMirar?.Invoke(mirando);
     }
 
     /// <summary>Lo llama PunteroMirada cuando se aprieta un botón mientras se mira la opción.</summary>
     public void Elegir()
     {
-        if (!Habilitada) return;
+        if (!Habilitada || soloMirar) return;
         Habilitada = false; // queda iluminada como "elegida" y ya no se puede volver a elegir
         alElegir?.Invoke();
     }

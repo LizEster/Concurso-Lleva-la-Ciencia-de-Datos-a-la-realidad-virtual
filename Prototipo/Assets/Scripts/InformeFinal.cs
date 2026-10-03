@@ -1,14 +1,13 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
 /// "Informe final del sistema" de la escena final1: un panel holográfico (mismo estilo del
 /// menú) cuyo color depende de cómo terminó la partida, con tarjetas de agua / refrigeración /
 /// rendimiento que cuentan hacia arriba, los mensajes finales escribiéndose como en una
-/// terminal, y botones que se eligen con la mirada + A/B/X/Y.
+/// terminal, y botones que se eligen con la mirada + A/B/X/Y. Al final lleva al MapaDecisiones.
 /// Lo crea FinalManager con InformeFinal.Mostrar(...).
 /// </summary>
 public class InformeFinal : MonoBehaviour
@@ -18,7 +17,6 @@ public class InformeFinal : MonoBehaviour
     private const float MetrosPorPx = 0.0015f;
     private const float Distancia = 2.3f;
     private const float SegundosPorLetra = 0.025f;
-    private const string EscenaJuego = "Nivel_Principal";
 
     private string[] mensajes;
     private float agua;
@@ -180,24 +178,16 @@ public class InformeFinal : MonoBehaviour
     private void CrearBotonesFinales()
     {
         LimpiarBotones();
-        CrearBoton("VOLVER A JUGAR", new Vector2(-270f, 0f), 480f, () => StartCoroutine(VolverAJugar()));
-        CrearBoton("SALIR", new Vector2(270f, 0f), 480f, Salir);
+        CrearBoton("VER MAPA DE DECISIONES", new Vector2(0f, 0f), 640f, () => StartCoroutine(IrAlMapa()));
     }
 
-    private IEnumerator VolverAJugar()
+    /// <summary>El informe se desvanece y aparece el Mapa de decisiones (que tiene "Volver a jugar" y "Salir").</summary>
+    private IEnumerator IrAlMapa()
     {
         LimpiarBotones();
-        yield return VeloNegro.Fundir(0f, 1f, 1f);
-        SceneManager.LoadScene(EscenaJuego);
-    }
-
-    private void Salir()
-    {
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
+        yield return Animar(0.5f, t => grupo.alpha = 1f - t);
+        MapaDecisiones.Mostrar();
+        Destroy(gameObject);
     }
 
     // ------------------------------------------------------------------
@@ -216,15 +206,15 @@ public class InformeFinal : MonoBehaviour
         }
         else if (refrigeracion >= 60f)
         {
-            acento = EstiloUI.Cian; titulo = "PROCESAMIENTO COMPLETADO"; estado = "ÓPTIMO";
+            acento = new Color(0.25f, 1f, 0.45f, 1f); titulo = "PROCESAMIENTO COMPLETADO"; estado = "ÓPTIMO"; // verde
         }
         else if (refrigeracion >= 25f)
         {
-            acento = new Color(1f, 0.8f, 0.25f, 1f); titulo = "PROCESAMIENTO COMPLETADO"; estado = "MODERADO";
+            acento = new Color(1f, 0.85f, 0.2f, 1f); titulo = "PROCESAMIENTO COMPLETADO"; estado = "MODERADO"; // amarillo
         }
         else
         {
-            acento = new Color(1f, 0.5f, 0.15f, 1f); titulo = "COMPLETADO... APENAS"; estado = "CRÍTICO";
+            acento = new Color(1f, 0.55f, 0.15f, 1f); titulo = "COMPLETADO... APENAS"; estado = "CRÍTICO"; // naranja
         }
     }
 

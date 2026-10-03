@@ -24,6 +24,9 @@ public static class EstiloUI
 
     public static readonly Color Rojo = new Color(1f, 0.3f, 0.3f, 1f);
 
+    private static Sprite spriteCirculo;
+    private static Sprite spriteAro;
+
     private static Material materialUI;
     private static Material materialTexto;
     private static TMP_FontAsset fuenteDelMaterial;
@@ -37,6 +40,43 @@ public static class EstiloUI
             return GameManager.Instance.uiManager.textoTerminal.font;
         }
         return TMP_Settings.defaultFontAsset;
+    }
+
+    /// <summary>Círculo blanco relleno con borde suave (para nodos, puntos...).</summary>
+    public static Sprite Circulo()
+    {
+        if (spriteCirculo == null) spriteCirculo = CrearSpriteCirculo(128, 0f);
+        return spriteCirculo;
+    }
+
+    /// <summary>Aro blanco (círculo hueco) con borde suave.</summary>
+    public static Sprite Aro()
+    {
+        if (spriteAro == null) spriteAro = CrearSpriteCirculo(128, 0.78f);
+        return spriteAro;
+    }
+
+    private static Sprite CrearSpriteCirculo(int tamano, float radioInterior)
+    {
+        Texture2D textura = new Texture2D(tamano, tamano, TextureFormat.RGBA32, false);
+        textura.wrapMode = TextureWrapMode.Clamp;
+        textura.filterMode = FilterMode.Bilinear;
+
+        float radio = tamano * 0.5f;
+        Color32[] pixeles = new Color32[tamano * tamano];
+        for (int y = 0; y < tamano; y++)
+        {
+            for (int x = 0; x < tamano; x++)
+            {
+                float d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(radio, radio)) / radio;
+                float exterior = Mathf.Clamp01((1f - d) * radio);
+                float interior = radioInterior > 0f ? Mathf.Clamp01((d - radioInterior) * radio) : 1f;
+                pixeles[y * tamano + x] = new Color32(255, 255, 255, (byte)(255f * Mathf.Min(exterior, interior)));
+            }
+        }
+        textura.SetPixels32(pixeles);
+        textura.Apply();
+        return Sprite.Create(textura, new Rect(0, 0, tamano, tamano), new Vector2(0.5f, 0.5f), 100f);
     }
 
     public static Material MaterialUI()
