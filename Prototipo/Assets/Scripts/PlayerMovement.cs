@@ -130,6 +130,22 @@ public class PlayerMovement : MonoBehaviour
         velocity = Vector3.zero;
     }
 
+    /// <summary>
+    /// Mueve al jugador a 'posicion' (la de su Transform) mirando hacia 'rotacionY' grados, y
+    /// anula la velocidad de caída. Lo usa ControladorActo1 al terminar el diálogo.
+    /// </summary>
+    public void TeletransportarA(Vector3 posicion, float rotacionY)
+    {
+        if (controller == null) controller = GetComponent<CharacterController>();
+
+        bool estabaActivo = controller != null && controller.enabled;
+        if (controller != null) controller.enabled = false;
+        transform.SetPositionAndRotation(posicion, Quaternion.Euler(0f, rotacionY, 0f));
+        if (controller != null) controller.enabled = estabaActivo;
+
+        velocity = Vector3.zero;
+    }
+
     public void OnMove(InputValue value)
     {
         moveInput = value.Get<Vector2>();
@@ -137,6 +153,7 @@ public class PlayerMovement : MonoBehaviour
 
     public void OnJump(InputValue value)
     {
+        if (!enabled) return; // congelado (menú, diálogo...): el botón no debe dejar un salto pendiente
         Saltar();
     }
 

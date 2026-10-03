@@ -196,7 +196,7 @@ public class MenuPrincipal : MonoBehaviour
             yield return null;
         }
 
-        if (movimiento != null) movimiento.enabled = true;
+        // El jugador sigue quieto: ControladorActo1 lo suelta recién al terminar el diálogo.
         Bloqueando = false;
         Destroy(gameObject);
     }

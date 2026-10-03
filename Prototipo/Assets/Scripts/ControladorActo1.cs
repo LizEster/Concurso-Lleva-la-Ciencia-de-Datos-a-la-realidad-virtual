@@ -31,6 +31,17 @@ public class ControladorActo1 : MonoBehaviour
     [Tooltip("Tamaño de letra de las opciones que se eligen mirándolas (usan la misma fuente que el texto de la terminal).")]
     public float tamanoFuenteOpciones = 52f;
 
+    [Header("Después del diálogo: negro y reubicación")]
+    [Tooltip("Dónde aparece el jugador cuando termina el diálogo y todo se pone negro. Son los MISMOS números que muestra el Inspector del Player (relativos a su padre, 'Nivel'). Si asignas 'Punto Tras Dialogo', se usa ese objeto en vez de estos números.")]
+    public Vector3 posicionTrasDialogo = new Vector3(-0.18f, -12.48f, -46.39f);
+    [Tooltip("Hacia dónde mira el jugador al aparecer (rotación Y en grados, como en el Inspector del Player).")]
+    public float rotacionYTrasDialogo = -540.1f;
+    [Tooltip("Opcional: un objeto vacío en la escena que marque dónde aparece el jugador (usa su posición y su rotación Y).")]
+    public Transform puntoTrasDialogo;
+    public float duracionFundidoANegro = 1f;
+    public float segundosEnNegro = 0.6f;
+    public float duracionFundidoDesdeNegro = 1.5f;
+
     [Header("Cierre del diálogo")]
     [TextArea(1, 2)]
     public string textoFinalTrasDialogo = "Sígueme...";
@@ -96,6 +107,7 @@ public class ControladorActo1 : MonoBehaviour
     private int nodoActual = 0;
     private bool esperandoOpcion = false;
     private bool dialogoTerminado = false;
+    private PlayerMovement movimientoJugador;
 
     /// <summary>
     /// True recién cuando el jugador terminó de leer TODO el diálogo del robot y eligió
@@ -108,6 +120,14 @@ public class ControladorActo1 : MonoBehaviour
     {
         // La barrera bloquea desde el minuto uno, hasta que se elija "Preparada/o.".
         if (barreraSalida != null) barreraSalida.SetActive(true);
+
+        // El jugador no se puede mover desde el menú hasta terminar TODO el diálogo
+        // (mirar alrededor sí, para apuntar a las opciones).
+        movimientoJugador = FindAnyObjectByType<PlayerMovement>();
+        CongelarJugador(true);
+
+        // El robot se queda quieto (esperando para hablar) hasta que termine el diálogo.
+        if (botGuia != null) botGuia.enPausa = true;
 
         StartCoroutine(SecuenciaCompleta());
     }
@@ -127,7 +147,23 @@ public class ControladorActo1 : MonoBehaviour
         yield return null; // deja que MenuPrincipal alcance a crearse
         while (MenuPrincipal.Bloqueando) yield return null;
 
+        // Por si algo lo soltó en el camino (el menú, otro script...).
+        CongelarJugador(true);
+
+        // El robot aparece de frente, delante de donde está mirando el jugador.
+        if (botGuia != null)
+        {
+            botGuia.enPausa = true;
+            botGuia.ColocarFrenteAlJugador();
+        }
+
         MostrarNodo(0);
+    }
+
+    private void CongelarJugador(bool congelar)
+    {
+        if (movimientoJugador == null) movimientoJugador = FindAnyObjectByType<PlayerMovement>();
+        if (movimientoJugador != null) movimientoJugador.enabled = !congelar;
     }
 
     private void MostrarNodo(int indice)
@@ -147,7 +183,12 @@ public class ControladorActo1 : MonoBehaviour
     /// </summary>
     private IEnumerator EscribirEnNube(string mensaje, System.Action alTerminar)
     {
-        if (NubeDialogoBot.Instancia == null) yield break;
+        if (NubeDialogoBot.Instancia == null)
+        {
+            // Sin burbuja no hay dónde escribir, pero el diálogo no se puede quedar pegado.
+            alTerminar?.Invoke();
+            yield break;
+        }
 
         ReproducirBip();
         yield return new WaitForSeconds(0.35f); // el bip suena antes de que empiece el texto
@@ -198,8 +239,9 @@ public class ControladorActo1 : MonoBehaviour
             textos[i] = opciones[i].textoOpcion;
         }
 
+        // Un poco más abajo de lo normal, para no tapar al robot ni su burbuja.
         TMP_FontAsset fuente = uiManager != null && uiManager.textoTerminal != null ? uiManager.textoTerminal.font : null;
-        PanelOpcionesMirada.Mostrar(textos, fuente, tamanoFuenteOpciones, ElegirOpcion);
+        PanelOpcionesMirada.Mostrar(null, textos, fuente, tamanoFuenteOpciones, ElegirOpcion, 0.45f);
     }
 
     private void ElegirOpcion(int indice)
@@ -223,24 +265,57 @@ public class ControladorActo1 : MonoBehaviour
         dialogoTerminado = true;
 
         PanelOpcionesMirada.Ocultar(); // ya no hay nada que elegir
+        StartCoroutine(TransicionTrasDialogo());
+    }
 
-        // El robot dice su última frase (con bip, igual que las demás) y el jugador queda
-        // libre para avanzar.
-        StartCoroutine(EscribirEnNube(textoFinalTrasDialogo, null));
+    /// <summary>
+    /// Al elegir "Preparada/o.": todo se pone negro, el jugador y el robot aparecen en el
+    /// punto de salida, vuelve la imagen, el robot dice "Sígueme..." y recién ahí el jugador
+    /// se puede mover y el robot empieza a guiarlo.
+    /// </summary>
+    private IEnumerator TransicionTrasDialogo()
+    {
+        if (botGuia != null) botGuia.Curarse();
+        if (NubeDialogoBot.Instancia != null) NubeDialogoBot.Instancia.Ocultar();
 
-        if (botGuia != null)
+        yield return VeloNegro.Fundir(0f, 1f, duracionFundidoANegro);
+
+        // --- Todo esto pasa en negro ---
+        if (barreraSalida != null) barreraSalida.SetActive(false);
+        if (puertaInicio != null) puertaInicio.AbrirPuerta();
+
+        if (movimientoJugador == null) movimientoJugador = FindAnyObjectByType<PlayerMovement>();
+        if (movimientoJugador != null)
         {
-            botGuia.Curarse();
+            Vector3 destino;
+            float rotacionY;
+            if (puntoTrasDialogo != null)
+            {
+                destino = puntoTrasDialogo.position;
+                rotacionY = puntoTrasDialogo.eulerAngles.y;
+            }
+            else
+            {
+                // Los números del Inspector son locales al padre del Player ('Nivel', que está
+                // desplazado 24,66 m en Y): se pasan a coordenadas de mundo.
+                Transform padre = movimientoJugador.transform.parent;
+                destino = padre != null ? padre.TransformPoint(posicionTrasDialogo) : posicionTrasDialogo;
+                rotacionY = rotacionYTrasDialogo + (padre != null ? padre.eulerAngles.y : 0f);
+            }
+            movimientoJugador.TeletransportarA(destino, rotacionY);
         }
 
-        if (barreraSalida != null)
-        {
-            barreraSalida.SetActive(false);
-        }
+        yield return null; // un frame para que la cámara (y la cabeza en el visor) ya estén en el lugar nuevo
 
-        if (puertaInicio != null)
-        {
-            puertaInicio.AbrirPuerta();
-        }
+        if (botGuia != null) botGuia.ColocarFrenteAlJugador();
+
+        yield return new WaitForSeconds(segundosEnNegro);
+        yield return VeloNegro.Fundir(1f, 0f, duracionFundidoDesdeNegro);
+
+        // El robot dice su última frase (con bip, igual que las demás).
+        yield return EscribirEnNube(textoFinalTrasDialogo, null);
+
+        CongelarJugador(false);
+        if (botGuia != null) botGuia.enPausa = false;
     }
 }

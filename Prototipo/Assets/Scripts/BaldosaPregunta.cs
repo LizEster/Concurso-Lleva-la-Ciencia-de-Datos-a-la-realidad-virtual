@@ -160,8 +160,11 @@ public class BaldosaPregunta : MonoBehaviour
 
     private void IniciarCronometro()
     {
-        tiempoRestante = tiempoParaResponder;
-        cronometroCorriendo = tiempoParaResponder > 0f;
+        // Cada caída le quita segundos al tiempo para responder (ver GameManager).
+        tiempoRestante = GameManager.Instance != null
+            ? GameManager.Instance.TiempoParaResponder(tiempoParaResponder)
+            : tiempoParaResponder;
+        cronometroCorriendo = tiempoRestante > 0f;
         if (cronometroCorriendo && panelHolograma != null) panelHolograma.MostrarCronometro(tiempoRestante);
     }
 
@@ -174,6 +177,25 @@ public class BaldosaPregunta : MonoBehaviour
         if (panelHolograma != null) panelHolograma.MostrarCronometro(tiempoRestante);
 
         if (tiempoRestante <= 0f) TiempoAgotado();
+    }
+
+    /// <summary>
+    /// Se acabaron las reservas (GameManager): la baldosa se hunde sí o sí, con lo que tenga
+    /// encima, y ya no se puede responder ni reaparecer en ella.
+    /// </summary>
+    public void ColapsarPorFinDelJuego()
+    {
+        cronometroCorriendo = false;
+        colapsadaPorTiempo = true;
+        respondida = true;
+        jugadorEncima = false;
+
+        if (panelHolograma != null) panelHolograma.Ocultar();
+
+        if (!yaEmergida) return; // sigue hundida en el vacío: no hay nada que caer
+
+        StopAllCoroutines();
+        StartCoroutine(CorutinaColapsar());
     }
 
     /// <summary>Se acabó el tiempo sin responder: la baldosa se hunde con el jugador encima.</summary>
@@ -215,14 +237,24 @@ public class BaldosaPregunta : MonoBehaviour
 
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.RegistrarGastoComputacional(costoCaidaRefri, costoCaidaAgua, mensajeCaida);
+            GameManager gm = GameManager.Instance;
+
+            // La última caída permitida termina el juego (pasa a la escena final): no se reaparece.
+            if (!gm.RegistrarCaida()) return;
+
+            int quedan = gm.caidasMaximas - gm.Caidas;
+            string aviso = $"{mensajeCaida}\n> Caídas: {gm.Caidas}/{gm.caidasMaximas}" +
+                           (quedan == 1 ? " - <color=red>¡la próxima es la última!</color>" : "") +
+                           $"\n> Tiempo para responder: {gm.TiempoParaResponder(tiempoParaResponder):0} s";
+            gm.RegistrarGastoComputacional(costoCaidaRefri, costoCaidaAgua, aviso);
 
             // Si con esta caída se acabó el agua, la caída ES el final: no se reaparece.
-            if (GameManager.Instance.JuegoTerminado) return;
+            if (gm.JuegoTerminado) return;
         }
 
-        // Si esta baldosa ya estaba respondida (te caíste por quedarte encima cuando colapsó),
-        // reapareces en la siguiente, que es donde tenías que ir. Si no, en esta misma.
+        // Reapareces en esta misma baldosa, con la MISMA pregunta (cada baldosa conserva la
+        // suya). Sólo si ya la habías respondido (te caíste por quedarte encima cuando
+        // colapsó) reapareces en la siguiente, que es donde tenías que ir.
         BaldosaPregunta destino = this;
         if (respondida && siguienteBaldosa != null && siguienteBaldosa.yaEmergida) destino = siguienteBaldosa;
 

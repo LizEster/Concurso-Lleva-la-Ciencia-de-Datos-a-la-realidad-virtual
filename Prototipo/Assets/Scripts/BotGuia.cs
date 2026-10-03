@@ -33,6 +33,10 @@ public class BotGuia : MonoBehaviour
     public Material materialCuerpo;
     public Color colorLuz = new Color(0f, 1f, 1f, 1f);
 
+    [Header("Pausa")]
+    [Tooltip("Mientras está activo, el bot se queda quieto en su sitio mirando al jugador (por ejemplo, durante el diálogo). Lo maneja ControladorActo1.")]
+    public bool enPausa = false;
+
     [Header("Estado de salud")]
     [Tooltip("Empieza con la luz roja (enfermo). Se cura llamando a Curarse().")]
     public bool estaEnfermo = true;
@@ -207,6 +211,35 @@ public class BotGuia : MonoBehaviour
         return material;
     }
 
+    /// <summary>
+    /// Pone al bot de pie delante de donde está mirando el jugador (la cabeza en el visor),
+    /// mirándolo. Lo usa ControladorActo1 para el diálogo y después de reubicar al jugador.
+    /// </summary>
+    public void ColocarFrenteAlJugador()
+    {
+        if (jugador == null) return;
+
+        Transform cabeza = PunteroMirada.Cabeza();
+        Vector3 adelante = Vector3.ProjectOnPlane(cabeza != null ? cabeza.forward : jugador.forward, Vector3.up);
+        if (adelante.sqrMagnitude < 0.0001f) adelante = jugador.forward;
+        adelante.Normalize();
+
+        Vector3 destino = jugador.position + adelante * distanciaAdelante;
+        if (NavegacionSuelo.Instancia.AlturaDelSuelo(destino, out float alturaSuelo))
+        {
+            destino.y = alturaSuelo + alturaSobreSuelo;
+        }
+        else
+        {
+            destino.y = jugador.position.y - 1f; // aprox. la altura de los pies del jugador
+        }
+
+        transform.position = destino;
+        alturaObjetivo = destino.y;
+        velocidadActual = 0f;
+        transform.rotation = Quaternion.LookRotation(-adelante, Vector3.up); // mirando al jugador
+    }
+
     private void ColocarJuntoAlJugador()
     {
         if (jugador == null) return;
@@ -229,7 +262,8 @@ public class BotGuia : MonoBehaviour
     {
         if (jugador == null) return;
 
-        Vector3 puntoObjetivo = ObtenerPuntoDeGuia();
+        // En pausa (diálogo): no camina, sólo se queda mirando al jugador.
+        Vector3 puntoObjetivo = enPausa ? transform.position : ObtenerPuntoDeGuia();
         MoverHacia(puntoObjetivo);
         PegarAlSuelo();
         AnimarCaminata();

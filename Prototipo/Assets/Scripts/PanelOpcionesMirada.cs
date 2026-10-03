@@ -16,7 +16,7 @@ public class PanelOpcionesMirada : MonoBehaviour
     private const float AnchoPx = 900f;
     private const float MetrosPorPx = 0.0013f;   // 900 px ≈ 1,17 m de ancho
     private const float Distancia = 1.6f;        // metros delante de los ojos
-    private const float BajarMetros = 0.2f;      // un poco bajo la línea de los ojos, más cómodo para leer
+    private const float BajarMetrosPorDefecto = 0.2f; // un poco bajo la línea de los ojos, más cómodo para leer
     private const float Espacio = 18f;           // px entre opciones
     private const float Margen = 36f;            // px de borde cuando hay mensaje
 
@@ -47,7 +47,8 @@ public class PanelOpcionesMirada : MonoBehaviour
     /// Igual, pero con un 'mensaje' arriba de las opciones (acepta rich text de TextMeshPro).
     /// Se puede llamar sin opciones para mostrar sólo el mensaje (ej. "Abriendo puerta...").
     /// </summary>
-    public static void Mostrar(string mensaje, string[] opciones, TMP_FontAsset fuente, float tamanoFuente, Action<int> alElegir)
+    public static void Mostrar(string mensaje, string[] opciones, TMP_FontAsset fuente, float tamanoFuente, Action<int> alElegir,
+                               float bajarMetros = BajarMetrosPorDefecto)
     {
         if (opciones == null) opciones = new string[0];
         if (opciones.Length == 0 && string.IsNullOrEmpty(mensaje))
@@ -57,7 +58,7 @@ public class PanelOpcionesMirada : MonoBehaviour
         }
 
         if (instancia == null) instancia = Construir();
-        instancia.Armar(mensaje, opciones, fuente, tamanoFuente, alElegir);
+        instancia.Armar(mensaje, opciones, fuente, tamanoFuente, alElegir, bajarMetros);
     }
 
     public static void Ocultar()
@@ -90,11 +91,11 @@ public class PanelOpcionesMirada : MonoBehaviour
         return panel;
     }
 
-    private void Armar(string mensaje, string[] opciones, TMP_FontAsset fuente, float tamanoFuente, Action<int> alElegir)
+    private void Armar(string mensaje, string[] opciones, TMP_FontAsset fuente, float tamanoFuente, Action<int> alElegir, float bajarMetros)
     {
         Limpiar();
         gameObject.SetActive(true);
-        Colocar();
+        Colocar(bajarMetros);
 
         if (fuente == null) fuente = TMP_Settings.defaultFontAsset;
         if (materialTexto == null || fuenteMaterial != fuente)
@@ -186,7 +187,7 @@ public class PanelOpcionesMirada : MonoBehaviour
     }
 
     /// <summary>Lo pone delante de la mirada, de pie (sin inclinarse) y mirando al jugador.</summary>
-    private void Colocar()
+    private void Colocar(float bajarMetros)
     {
         Transform cabeza = PunteroMirada.Cabeza();
         if (cabeza == null) return;
@@ -196,7 +197,7 @@ public class PanelOpcionesMirada : MonoBehaviour
         adelante.Normalize();
 
         contenedor.SetPositionAndRotation(
-            cabeza.position + adelante * Distancia + Vector3.down * BajarMetros,
+            cabeza.position + adelante * Distancia + Vector3.down * bajarMetros,
             Quaternion.LookRotation(adelante, Vector3.up));
     }
 

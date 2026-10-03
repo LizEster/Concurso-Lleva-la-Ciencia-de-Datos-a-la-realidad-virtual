@@ -52,9 +52,9 @@ public class FinalManager : MonoBehaviour
     private bool esferaActivada = false;
     private bool esferaGiganteCreciendo = false;
     private bool finalActivado = false;
-    private bool mostrandoMensajes = false;
-    private int mensajeActual = 0;
     private string[] mensajesFinales;
+    private float aguaFinal;
+    private float refrigeracionFinal;
     private string textoEsferaPequena;
     private string textoEsferaGrande;
 
@@ -64,6 +64,8 @@ public class FinalManager : MonoBehaviour
 
         float agua = DatosFinales.aguaConsumida;
         float refrigeracion = DatosFinales.refrigeracionRestante;
+        aguaFinal = agua;
+        refrigeracionFinal = refrigeracion;
 
         // Preparar los textos según el nivel de refrigeración
         PrepararTextos(agua, refrigeracion);
@@ -93,7 +95,40 @@ public class FinalManager : MonoBehaviour
     private void PrepararTextos(float agua, float refrigeracion)
     {
         // ===== TEXTO DE LA ESFERA PEQUEÑA (siempre muestra los litros reales) =====
-        textoEsferaPequena = $"Agua consumida al usar LLM de forma eficiente:\n{agua:F2} Litros";
+        textoEsferaPequena = DatosFinales.colapsoTermico
+            ? $"Agua consumida antes del colapso:\n{agua:F2} Litros"
+            : DatosFinales.demasiadasCaidas
+                ? $"Agua consumida antes de perderte en el vacío:\n{agua:F2} Litros"
+                : $"Agua consumida al usar LLM de forma eficiente:\n{agua:F2} Litros";
+
+        // ===== FINAL POR COLAPSO TÉRMICO (se acabaron las reservas y el jugador cayó) =====
+        if (DatosFinales.colapsoTermico)
+        {
+            textoEsferaGrande = "Esta esfera representa el agua que consume un solo entrenamiento real de IA.\nTu sistema colapsó con mucho menos. Ahora imagina millones de usuarios.";
+            mensajesFinales = new string[]
+            {
+                "> ERROR 508: Límite de recursos excedido.\n> Estado de refrigeración restante: 0%\n> Rendimiento: COLAPSO TÉRMICO.",
+                $"> Tu consulta evaporó {agua:F2} litros de agua real antes de colapsar.\n> Ya sea delegando las decisiones a la IA o acumulando errores, la sed del algoritmo secó las reservas.",
+                "> Cada cálculo, cada error y cada prompt consume agua real de nuestro planeta\n> para evitar que los componentes ardan.",
+                "> Entender cómo funciona esta tecnología no es solo técnica, es supervivencia.",
+                "> La próxima vez, calcula mejor tu huella.\n> Úsala con conciencia."
+            };
+            return;
+        }
+
+        // ===== FINAL POR DEMASIADAS CAÍDAS =====
+        if (DatosFinales.demasiadasCaidas)
+        {
+            textoEsferaGrande = "Esta esfera representa el agua que consume un solo entrenamiento real de IA.\nCada intento fallido también costó agua.";
+            mensajesFinales = new string[]
+            {
+                $"> ERROR 404: Usuario perdido en el vacío.\n> Estado de refrigeración restante: {refrigeracion:F0}%\n> Rendimiento: CONEXIÓN PERDIDA.",
+                $"> Tu recorrido evaporó {agua:F2} litros de agua real.\n> Cada caída obligó al sistema a reconstruir el camino, y eso también tiene un costo.",
+                "> Pensar con calma no es perder el tiempo: es lo que evita repetir el gasto.\n> Cada reintento, en una IA real, es otra consulta que evapora agua.",
+                "> La próxima vez, avanza con conciencia."
+            };
+            return;
+        }
 
         // ===== TEXTO DE LA ESFERA GRANDE (cambia según refrigeración) =====
         if (refrigeracion >= 60f)
@@ -180,14 +215,6 @@ public class FinalManager : MonoBehaviour
                 }
             }
         }
-
-        if (mostrandoMensajes)
-        {
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))
-            {
-                MostrarSiguienteMensaje();
-            }
-        }
     }
 
     private void ActivarEsfera()
@@ -238,84 +265,18 @@ public class FinalManager : MonoBehaviour
         if (movimiento == null) movimiento = playerObjeto.GetComponent("FirstPersonController") as MonoBehaviour;
         if (movimiento != null) movimiento.enabled = false;
 
-        // Ocultar el texto de la esfera
-        if (textoEsfera != null)
-            textoEsfera.gameObject.SetActive(false);
+        // Ocultar el texto de la esfera (y la UI vieja de la pantalla final, que ya no se usa)
+        if (textoEsfera != null) textoEsfera.gameObject.SetActive(false);
+        if (textoFinal != null) textoFinal.gameObject.SetActive(false);
+        if (panelNegro != null) panelNegro.gameObject.SetActive(false);
 
-        // Fade a negro
-        if (panelNegro != null)
-        {
-            panelNegro.gameObject.SetActive(true);
-            panelNegro.color = new Color(0f, 0f, 0f, 0f);
+        // Fundido a negro (funciona igual en el visor y en PC)
+        yield return VeloNegro.Fundir(0f, 1f, 2f);
+        yield return new WaitForSeconds(1f);
 
-            float tiempo = 0f;
-            float duracion = 2f;
-
-            while (tiempo < duracion)
-            {
-                tiempo += Time.deltaTime;
-                float alpha = Mathf.Clamp01(tiempo / duracion);
-                panelNegro.color = new Color(0f, 0f, 0f, alpha);
-                yield return null;
-            }
-        }
-
-        yield return new WaitForSeconds(2f);
-
-        if (textoFinal != null)
-        {
-            textoFinal.gameObject.SetActive(true);
-            textoFinal.text = "";
-        }
-
-        mostrandoMensajes = true;
-        MostrarSiguienteMensaje();
-    }
-
-    private void MostrarSiguienteMensaje()
-    {
-        if (mensajeActual < mensajesFinales.Length)
-        {
-            if (textoFinal != null)
-            {
-                StartCoroutine(EscribirMensajeGradual(mensajesFinales[mensajeActual]));
-            }
-            mensajeActual++;
-        }
-        else
-        {
-            mostrandoMensajes = false;
-            StartCoroutine(FinalDelJuego());
-        }
-    }
-
-    private IEnumerator EscribirMensajeGradual(string mensaje)
-    {
-        mostrandoMensajes = false;
-        textoFinal.text = "";
-
-        foreach (char letra in mensaje)
-        {
-            textoFinal.text += letra;
-            yield return new WaitForSeconds(0.03f);
-        }
-
-        textoFinal.text += "\n\n[Presiona Espacio para continuar]";
-        mostrandoMensajes = true;
-    }
-
-    private IEnumerator FinalDelJuego()
-    {
-        if (textoFinal != null)
-        {
-            textoFinal.text = "";
-        }
-
-        yield return new WaitForSeconds(2f);
-
-        // Descomentar una de estas líneas según lo que quieran hacer al terminar:
-        // SceneManager.LoadScene("MenuPrincipal");
-        // Application.Quit();
+        // Informe final holográfico: tarjetas con los números, mensajes tipo terminal y
+        // botones con la mirada + A/B/X/Y (ver InformeFinal).
+        InformeFinal.Mostrar(mensajesFinales, aguaFinal, refrigeracionFinal);
     }
 
     private IEnumerator FadeEntrada()
