@@ -41,3 +41,6 @@ Temp/
 Logs/
 Obj/
 Build/*.apk
+*_BackUpThisFolder_ButDontShipItWithYourGame/
+*_BurstDebugInformation_DoNotShip/
+.DS_Store
