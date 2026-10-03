@@ -40,4 +40,4 @@ Library/
 Temp/
 Logs/
 Obj/
-Build/
+Build/*.apk

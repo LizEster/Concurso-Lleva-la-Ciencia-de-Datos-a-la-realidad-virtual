@@ -140,6 +140,9 @@ public static class RigVR
         driver.positionInput = new InputActionProperty(new InputAction(binding: posicion, expectedControlType: "Vector3"));
         driver.rotationInput = new InputActionProperty(new InputAction(binding: rotacion, expectedControlType: "Quaternion"));
         driver.trackingStateInput = new InputActionProperty(new InputAction(binding: estado, expectedControlType: "Integer"));
+        // Cardboard siempre reporta trackingState = 0 ("nada rastreado") aunque sí manda la
+        // rotación de la cabeza; si no se ignora, el TrackedPoseDriver nunca mueve la cámara.
+        driver.ignoreTrackingState = true;
     }
 
     private static readonly List<XRInputSubsystem> subsistemas = new List<XRInputSubsystem>();

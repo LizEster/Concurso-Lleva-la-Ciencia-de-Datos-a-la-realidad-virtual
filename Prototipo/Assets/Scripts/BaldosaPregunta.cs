@@ -21,14 +21,28 @@ public class BaldosaPregunta : MonoBehaviour
     public PanelHolografico panelHolograma;
 
     [Header("Diálogo del robot en el Piso 1")]
-    [Tooltip("Sólo se usa en la baldosa marcada como 'Piso Inicial': lo que dice el robot apenas el jugador la pisa por primera vez. Usa {0} donde quieras que aparezcan las iniciales del jugador.")]
+    [Tooltip("Sólo se usa en la baldosa marcada como 'Piso Inicial': lo que dice el robot apenas el jugador la pisa por primera vez.")]
     [TextArea(1, 2)]
-    public string textoRobotBuenaSuerte = "¡Mucha suerte, {0}!!";
+    public string textoRobotBuenaSuerte = "¡Mucha suerte!!";
     [Tooltip("Segundos que se muestra ese aviso del robot.")]
     public float duracionAvisoRobot = 4f;
     [Tooltip("Arrastra aquí el mismo AudioSource que usa el bot para su bip de diálogo (sólo hace falta asignarlo en la baldosa marcada como Piso Inicial).")]
     public AudioSource fuenteAudioBip;
     public AudioClip clipBip;
+
+    [Header("Cronómetro para responder")]
+    [Tooltip("Segundos para responder la pregunta desde que aparece. Si llega a 0, esta baldosa se cae contigo encima. 0 = sin límite.")]
+    public float tiempoParaResponder = 30f;
+
+    [Header("Caída y reaparición")]
+    [Tooltip("Cuántos metros bajo la baldosa tiene que caer el jugador para reaparecer encima de ella.")]
+    public float alturaCaidaParaReaparecer = 6f;
+    [Tooltip("Reservas de refrigeración que se pierden al caerse.")]
+    public float costoCaidaRefri = 20f;
+    [Tooltip("Litros de agua que se gastan al caerse.")]
+    public float costoCaidaAgua = 1f;
+    [TextArea(1, 3)]
+    public string mensajeCaida = "> Caída al vacío detectada.\nReconstruir el camino consumió reservas de refrigeración.";
 
     [Header("Colapso del piso (una vez que ya avanzaste)")]
     [Tooltip("Segundos que espera este piso, después de responder SU pregunta, antes de empezar a colapsar. Dale tiempo suficiente para cruzar al siguiente.")]
@@ -61,6 +75,14 @@ public class BaldosaPregunta : MonoBehaviour
     private Vector3 posicionFinal;
     private bool yaEmergida;
 
+    private float tiempoRestante;
+    private bool cronometroCorriendo;
+    private bool colapsadaPorTiempo;   // se cayó porque se acabó el tiempo (sin responder)
+    private float alturaSuperficie;    // metros desde el pivote de la baldosa hasta su cara de arriba
+
+    /// <summary>La última baldosa que pisó el jugador: si se cae, reaparece ahí.</summary>
+    private static BaldosaPregunta ultimaPisada;
+
     void Start()
     {
         AsignarPreguntaDelBanco();
@@ -72,6 +94,7 @@ public class BaldosaPregunta : MonoBehaviour
         colisionadorPropio = GetComponent<Collider>();
         renderersPropios = GetComponentsInChildren<Renderer>();
         posicionFinal = transform.position;
+        alturaSuperficie = CalcularAlturaSuperficie();
 
         if (esPisoInicial)
         {
@@ -102,9 +125,13 @@ public class BaldosaPregunta : MonoBehaviour
 
     void Update()
     {
+        if (playerObjeto == null) return;
+
+        RevisarPisadaYCaida();
+
         // Mientras siga hundida en el vacío (todavía no le toca emerger) no puede detectar
         // al jugador ni mostrar su pregunta: físicamente no está ahí todavía.
-        if (respondida || playerObjeto == null || !yaEmergida) return;
+        if (respondida || !yaEmergida || colapsadaPorTiempo) return;
 
         float distancia = Vector3.Distance(transform.position, playerObjeto.transform.position);
 
@@ -121,20 +148,149 @@ public class BaldosaPregunta : MonoBehaviour
             // Ya no se congela al jugador al abrir la pregunta: puede seguir caminando
             // (y por lo tanto arriesgarse a caer si el piso de atrás ya colapsó) mientras decide.
             DesplegarPreguntaEnUI();
+            IniciarCronometro();
         }
 
-        // Botones A / B / X eligen una opción e Y responde con IA (o 1 / 2 / 3 / 4 en el teclado).
-        if (jugadorEncima && !resolviendoSeleccion)
+        ActualizarCronometro();
+    }
+
+    // ------------------------------------------------------------------
+    // CRONÓMETRO: tiempo para responder. Si llega a 0, la baldosa se cae.
+    // ------------------------------------------------------------------
+
+    private void IniciarCronometro()
+    {
+        tiempoRestante = tiempoParaResponder;
+        cronometroCorriendo = tiempoParaResponder > 0f;
+        if (cronometroCorriendo && panelHolograma != null) panelHolograma.MostrarCronometro(tiempoRestante);
+    }
+
+    private void ActualizarCronometro()
+    {
+        // Mientras se resalta la opción elegida el tiempo se congela (ya respondiste).
+        if (!cronometroCorriendo || !jugadorEncima || resolviendoSeleccion) return;
+
+        tiempoRestante -= Time.deltaTime;
+        if (panelHolograma != null) panelHolograma.MostrarCronometro(tiempoRestante);
+
+        if (tiempoRestante <= 0f) TiempoAgotado();
+    }
+
+    /// <summary>Se acabó el tiempo sin responder: la baldosa se hunde con el jugador encima.</summary>
+    private void TiempoAgotado()
+    {
+        cronometroCorriendo = false;
+        colapsadaPorTiempo = true;
+
+        if (panelHolograma != null) panelHolograma.Ocultar();
+        else PanelOpcionesMirada.Ocultar();
+
+        StopAllCoroutines();
+        StartCoroutine(CorutinaColapsar());
+    }
+
+    // ------------------------------------------------------------------
+    // CAÍDA: si el jugador cae bajo la última baldosa que pisó, reaparece en ella.
+    // ------------------------------------------------------------------
+
+    private void RevisarPisadaYCaida()
+    {
+        Vector3 jugador = playerObjeto.transform.position;
+
+        bool estaPisable = yaEmergida && colisionadorPropio != null && colisionadorPropio.enabled;
+        if (estaPisable && Vector3.Distance(transform.position, jugador) <= distanciaDeActivacion)
         {
-            if (EntradaVR.OpcionPresionada(0)) SeleccionarOpcion(0);
-            else if (EntradaVR.OpcionPresionada(1)) SeleccionarOpcion(1);
-            else if (EntradaVR.OpcionPresionada(2)) SeleccionarOpcion(2);
-            else if (EntradaVR.OpcionPresionada(3)) SeleccionarOpcionIA();
+            ultimaPisada = this;
+        }
+
+        if (ultimaPisada == this && jugador.y < posicionFinal.y - alturaCaidaParaReaparecer)
+        {
+            Reaparecer();
         }
     }
 
+    private void Reaparecer()
+    {
+        ultimaPisada = null;
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.RegistrarGastoComputacional(costoCaidaRefri, costoCaidaAgua, mensajeCaida);
+
+            // Si con esta caída se acabó el agua, la caída ES el final: no se reaparece.
+            if (GameManager.Instance.JuegoTerminado) return;
+        }
+
+        // Si esta baldosa ya estaba respondida (te caíste por quedarte encima cuando colapsó),
+        // reapareces en la siguiente, que es donde tenías que ir. Si no, en esta misma.
+        BaldosaPregunta destino = this;
+        if (respondida && siguienteBaldosa != null && siguienteBaldosa.yaEmergida) destino = siguienteBaldosa;
+
+        destino.RestaurarParaReaparecer();
+        destino.ColocarJugadorEncima();
+    }
+
+    /// <summary>Vuelve a armar la baldosa en su sitio. Si no estaba respondida, la pregunta vuelve a aparecer con el cronómetro desde cero.</summary>
+    private void RestaurarParaReaparecer()
+    {
+        StopAllCoroutines();
+        transform.position = posicionFinal;
+        yaEmergida = true;
+        SetVisible(true);
+        if (colisionadorPropio != null) colisionadorPropio.enabled = true;
+
+        colapsadaPorTiempo = false;
+        cronometroCorriendo = false;
+
+        if (!respondida)
+        {
+            jugadorEncima = false;          // Update la vuelve a detectar y muestra la pregunta
+            resolviendoSeleccion = false;
+        }
+        else
+        {
+            ProgramarPropioColapso();       // ya respondida: se vuelve a caer después del tiempo de siempre
+        }
+    }
+
+    private void ColocarJugadorEncima()
+    {
+        if (playerObjeto == null) return;
+
+        Vector3 pies = posicionFinal + Vector3.up * alturaSuperficie;
+        PlayerMovement movimiento = playerObjeto.GetComponent<PlayerMovement>();
+        if (movimiento != null) movimiento.TeletransportarPies(pies);
+        else playerObjeto.transform.position = pies + Vector3.up * 1f;
+
+        ultimaPisada = this;
+    }
+
+    private float CalcularAlturaSuperficie()
+    {
+        if (renderersPropios == null || renderersPropios.Length == 0) return 0f;
+
+        float maxY = float.NegativeInfinity;
+        foreach (Renderer r in renderersPropios)
+        {
+            if (r != null) maxY = Mathf.Max(maxY, r.bounds.max.y);
+        }
+        return float.IsInfinity(maxY) ? 0f : maxY - transform.position.y;
+    }
+
     /// <summary>
-    /// Se llama al presionar A/B/X: si hay panel holográfico asignado, primero lo ilumina
+    /// Se llama cuando el jugador elige una opción con la mirada + un botón (panel holográfico o, si
+    /// no hay panel, el panel flotante de respaldo). 0..2 = opciones, 3 = Responder con IA.
+    /// </summary>
+    private void AlElegirConMirada(int indice)
+    {
+        if (!jugadorEncima || resolviendoSeleccion || respondida) return;
+
+        if (indice == 3) SeleccionarOpcionIA();
+        else SeleccionarOpcion(indice);
+    }
+
+    /// <summary>
+    /// Se llama al elegir una opción: si hay panel holográfico asignado, primero lo ilumina
     /// (feedback visual) y recién cuando termina esa animación se resuelve de verdad la
     /// respuesta con EvaluarRespuesta. Sin panel asignado, resuelve al toque como antes.
     /// </summary>
@@ -148,7 +304,7 @@ public class BaldosaPregunta : MonoBehaviour
             EvaluarRespuesta(indiceOpcion);
     }
 
-    /// <summary>Mismo truco que SeleccionarOpcion pero para el botón Y (Responder con IA).</summary>
+    /// <summary>Mismo truco que SeleccionarOpcion pero para "Responder con IA".</summary>
     private void SeleccionarOpcionIA()
     {
         resolviendoSeleccion = true;
@@ -159,21 +315,17 @@ public class BaldosaPregunta : MonoBehaviour
             UsarIA();
     }
 
-    /// <summary>Sólo se llama en el Piso 1: el robot desea suerte usando las iniciales que
-    /// el jugador escribió antes en la terminal (guardadas en GameManager.inicialesJugador).</summary>
+    /// <summary>Sólo se llama en el Piso 1: el robot desea suerte.</summary>
     private void AvisarBuenaSuerte()
     {
         if (NubeDialogoBot.Instancia == null) return;
 
         ReproducirBip();
 
-        string iniciales = (GameManager.Instance != null && !string.IsNullOrEmpty(GameManager.Instance.inicialesJugador))
-            ? GameManager.Instance.inicialesJugador
-            : "";
-
-        string mensaje = string.IsNullOrEmpty(iniciales)
-            ? "¡Mucha suerte!!"
-            : string.Format(textoRobotBuenaSuerte, iniciales);
+        // Ya no se piden iniciales: si en la escena quedó guardado el texto viejo con "{0}",
+        // se le quita para que no aparezca tal cual.
+        string mensaje = (textoRobotBuenaSuerte ?? "").Replace(", {0}", "").Replace("{0}", "").Trim();
+        if (string.IsNullOrEmpty(mensaje)) mensaje = "¡Mucha suerte!!";
 
         NubeDialogoBot.Instancia.Mostrar(mensaje, duracionAvisoRobot);
     }
@@ -190,22 +342,22 @@ public class BaldosaPregunta : MonoBehaviour
     {
         if (panelHolograma != null)
         {
-            panelHolograma.Mostrar(enunciadoPregunta, textoOpciones);
+            panelHolograma.Mostrar(enunciadoPregunta, textoOpciones, AlElegirConMirada);
             return;
         }
 
-        // Respaldo por si todavía no arrastraste el PanelHolografico en el Inspector:
-        // sigue funcionando como antes, mostrando la pregunta en la terminal.
+        // Respaldo por si todavía no arrastraste el PanelHolografico en el Inspector: la
+        // pregunta va en la terminal y las opciones en el panel flotante de la mirada.
+        TMPro.TMP_FontAsset fuente = null;
         if (GameManager.Instance != null && GameManager.Instance.uiManager != null)
         {
-            string textoCompleto = $"{enunciadoPregunta}\n\n" +
-                                   $"{EntradaVR.EtiquetaOpcion(0)} {textoOpciones[0]}\n" +
-                                   $"{EntradaVR.EtiquetaOpcion(1)} {textoOpciones[1]}\n" +
-                                   $"{EntradaVR.EtiquetaOpcion(2)} {textoOpciones[2]}\n" +
-                                   $"{EntradaVR.EtiquetaOpcion(3)} Responder con IA";
-
-            GameManager.Instance.uiManager.MostrarMensajeTerminal(textoCompleto);
+            GameManager.Instance.uiManager.MostrarMensajeTerminal(enunciadoPregunta);
+            if (GameManager.Instance.uiManager.textoTerminal != null)
+                fuente = GameManager.Instance.uiManager.textoTerminal.font;
         }
+
+        string[] opciones = { textoOpciones[0], textoOpciones[1], textoOpciones[2], "Responder con IA" };
+        PanelOpcionesMirada.Mostrar(opciones, fuente, 52f, AlElegirConMirada);
     }
 
     // Delega la respuesta a la IA: avanza sin pensar, a costa de un consumo de agua mayor al de cualquier opción manual
@@ -213,8 +365,10 @@ public class BaldosaPregunta : MonoBehaviour
     {
         respondida = true;
         jugadorEncima = false;
+        cronometroCorriendo = false;
 
         if (panelHolograma != null) panelHolograma.Ocultar();
+        else PanelOpcionesMirada.Ocultar();
 
         if (GameManager.Instance != null)
         {
@@ -235,8 +389,10 @@ public class BaldosaPregunta : MonoBehaviour
         // Marcamos como respondida inmediatamente para que NUNCA te vuelva a preguntar lo mismo
         respondida = true;
         jugadorEncima = false;
+        cronometroCorriendo = false;
 
         if (panelHolograma != null) panelHolograma.Ocultar();
+        else PanelOpcionesMirada.Ocultar();
 
         if (GameManager.Instance != null)
         {
@@ -326,7 +482,11 @@ public class BaldosaPregunta : MonoBehaviour
     private IEnumerator CorutinaEsperarYColapsar()
     {
         yield return new WaitForSeconds(tiempoAntesDeColapsar);
+        yield return CorutinaColapsar();
+    }
 
+    private IEnumerator CorutinaColapsar()
+    {
         // Se apaga la colisión de entrada: si alguien sigue parado encima, empieza a caer de
         // verdad junto con el piso, en vez de quedar flotando sobre un colisionador fantasma.
         if (colisionadorPropio != null) colisionadorPropio.enabled = false;

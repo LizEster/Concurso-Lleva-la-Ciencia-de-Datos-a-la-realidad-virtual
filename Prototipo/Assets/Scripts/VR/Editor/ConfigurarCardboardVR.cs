@@ -183,7 +183,7 @@ public static class ConfigurarCardboardVR
 
         if (QualitySettings.GetRenderPipelineAssetAt(nivelMovil) is UniversalRenderPipelineAsset urp)
         {
-            urp.supportsHDR = false;
+            urp.supportsHDR = true; // sin HDR el bloom de los neones casi desaparece
             urp.msaaSampleCount = 2;
             urp.renderScale = 1f;
             EditorUtility.SetDirty(urp);

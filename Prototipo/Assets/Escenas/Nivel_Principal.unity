@@ -3046,19 +3046,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f0a3934e54c29484ca7ce6421b05b65b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PanelHolografico
-  textoEnunciado: {fileID: 1255397705}
-  botones:
-  - {fileID: 870839626}
-  - {fileID: 646870086}
-  - {fileID: 233026591}
-  - {fileID: 1330863931}
-  animator: {fileID: 0}
-  triggerAparecer: Aparecer
-  triggerDesaparecer: Desaparecer
+  distancia: 2.2
+  bajarMetros: 0.1
+  textoEncabezado: // CONSULTA DEL SISTEMA
+  textoBotonIA: RESPONDER CON IA
   duracionFadeSimple: 0.25
-  colorNormal: {r: 0.3, g: 0.85, b: 1, a: 0.85}
-  colorElegido: {r: 1, g: 1, b: 1, a: 1}
   duracionResaltado: 0.35
+  segundosUrgente: 10
 --- !u!114 &396886404
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3330,6 +3324,12 @@ MonoBehaviour:
   duracionAvisoRobot: 4
   fuenteAudioBip: {fileID: 0}
   clipBip: {fileID: 0}
+  tiempoParaResponder: 30
+  alturaCaidaParaReaparecer: 6
+  costoCaidaRefri: 20
+  costoCaidaAgua: 1
+  mensajeCaida: "> Ca\xEDda al vac\xEDo detectada.\nReconstruir el camino consumi\xF3
+    reservas de refrigeraci\xF3n."
   tiempoAntesDeColapsar: 4
   duracionColapso: 3
   profundidadColapso: 10
@@ -4702,6 +4702,12 @@ MonoBehaviour:
   duracionAvisoRobot: 4
   fuenteAudioBip: {fileID: 0}
   clipBip: {fileID: 0}
+  tiempoParaResponder: 30
+  alturaCaidaParaReaparecer: 6
+  costoCaidaRefri: 20
+  costoCaidaAgua: 1
+  mensajeCaida: "> Ca\xEDda al vac\xEDo detectada.\nReconstruir el camino consumi\xF3
+    reservas de refrigeraci\xF3n."
   tiempoAntesDeColapsar: 4
   duracionColapso: 3
   profundidadColapso: 10
@@ -5242,19 +5248,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f0a3934e54c29484ca7ce6421b05b65b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PanelHolografico
-  textoEnunciado: {fileID: 21028807}
-  botones:
-  - {fileID: 643758245}
-  - {fileID: 1846201165}
-  - {fileID: 1273447265}
-  - {fileID: 653613924}
-  animator: {fileID: 0}
-  triggerAparecer: Aparecer
-  triggerDesaparecer: Desaparecer
+  distancia: 2.2
+  bajarMetros: 0.1
+  textoEncabezado: // CONSULTA DEL SISTEMA
+  textoBotonIA: RESPONDER CON IA
   duracionFadeSimple: 0.25
-  colorNormal: {r: 0.3, g: 0.85, b: 1, a: 0.85}
-  colorElegido: {r: 1, g: 1, b: 1, a: 1}
   duracionResaltado: 0.35
+  segundosUrgente: 10
 --- !u!114 &710366276
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6162,7 +6162,7 @@ MonoBehaviour:
   colorFondoPanel: {r: 0, g: 0, b: 0, a: 0.85}
   colorTextoBoton: {r: 1, g: 1, b: 1, a: 1}
   colorFondoBoton: {r: 1, g: 1, b: 1, a: 0.15}
-  tamanoFuenteTexto: 24
+  tamanoFuenteTexto: 30
   tamanoFuenteBoton: 26
   textoBotonContinuar: Continuar
 --- !u!82 &830687499
@@ -6479,19 +6479,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f0a3934e54c29484ca7ce6421b05b65b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PanelHolografico
-  textoEnunciado: {fileID: 176380430}
-  botones:
-  - {fileID: 195930324}
-  - {fileID: 1101375382}
-  - {fileID: 182166919}
-  - {fileID: 155568501}
-  animator: {fileID: 0}
-  triggerAparecer: Aparecer
-  triggerDesaparecer: Desaparecer
+  distancia: 2.2
+  bajarMetros: 0.1
+  textoEncabezado: // CONSULTA DEL SISTEMA
+  textoBotonIA: RESPONDER CON IA
   duracionFadeSimple: 0.25
-  colorNormal: {r: 0.3, g: 0.85, b: 1, a: 0.85}
-  colorElegido: {r: 1, g: 1, b: 1, a: 1}
   duracionResaltado: 0.35
+  segundosUrgente: 10
 --- !u!114 &839829156
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6826,19 +6820,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f0a3934e54c29484ca7ce6421b05b65b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PanelHolografico
-  textoEnunciado: {fileID: 1541309039}
-  botones:
-  - {fileID: 1380494363}
-  - {fileID: 1763258341}
-  - {fileID: 2055933578}
-  - {fileID: 1917176047}
-  animator: {fileID: 0}
-  triggerAparecer: Aparecer
-  triggerDesaparecer: Desaparecer
+  distancia: 2.2
+  bajarMetros: 0.1
+  textoEncabezado: // CONSULTA DEL SISTEMA
+  textoBotonIA: RESPONDER CON IA
   duracionFadeSimple: 0.25
-  colorNormal: {r: 0.3, g: 0.85, b: 1, a: 0.85}
-  colorElegido: {r: 1, g: 1, b: 1, a: 1}
   duracionResaltado: 0.35
+  segundosUrgente: 10
 --- !u!114 &880049926
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7333,26 +7321,24 @@ MonoBehaviour:
   textoAvisoAbrir: '[E] Abrir'
   textoAvisoCerrar: '[E] Cerrar'
   tamanoFuenteAviso: 1
-  colorAviso: {r: 0, g: 1, b: 0.08543235, a: 1}
+  colorAviso: {r: 0, g: 1, b: 0, a: 1}
   animatorTerminal: {fileID: 920049210}
   duracionAnimacionApertura: 3
   normalizadoAbierta: 0
   normalizadoCerrada: 0.45
-  mouseLook: {fileID: 725336809}
   movimientoJugador: {fileID: 0}
-  canvasRectTransform: {fileID: 901236131}
-  textoPedirIniciales: Por favor escriba sus iniciales
-  textoAyudaIniciales: 'Joystick: arriba/abajo cambia la letra, izquierda/derecha
-    cambia de casilla
-
-    [A] para confirmar'
+  textoAdvertencia: "<align=center><b><color=#FF5555>ADVERTENCIA</color></b></align>\n\nAl
+    abrirse la puerta comienza el puente de datos:\n\n- Cada baldosa tiene una pregunta
+    y un <b>tiempo limitado</b> para responderla.\n- Si el tiempo se acaba, <b>el
+    piso se cae contigo encima</b>.\n- Cada ca\xEDda, cada error y cada respuesta
+    de la IA <b>gasta agua real</b> del sistema.\n\n<align=center>\xBFAceptas el
+    desaf\xEDo con consciencia?</align>"
+  textoAceptar: "Acepto el desaf\xEDo"
   textoAbriendoPuerta: Abriendo puerta...
-  maximoCaracteresIniciales: 4
+  tamanoFuenteAdvertencia: 48
   esperaAntesDeAbrir: 1.2
   puerta: {fileID: 1319955143}
   textoRobotAlAcercarse: "\xA1Abre la puerta para poder escapar!"
-  textoRobotAlAbrir: "\xA1Ten mucho cuidado! Si tardas mucho tiempo en responder,
-    el piso se caer\xE1."
   duracionAvisoRobot: 4
   fuenteAudioBip: {fileID: 1179647774}
   clipBip: {fileID: 8300000, guid: a0312cedb9e962053820f1c01423069e, type: 3}
@@ -7680,6 +7666,12 @@ MonoBehaviour:
   duracionAvisoRobot: 4
   fuenteAudioBip: {fileID: 0}
   clipBip: {fileID: 0}
+  tiempoParaResponder: 30
+  alturaCaidaParaReaparecer: 6
+  costoCaidaRefri: 20
+  costoCaidaAgua: 1
+  mensajeCaida: "> Ca\xEDda al vac\xEDo detectada.\nReconstruir el camino consumi\xF3
+    reservas de refrigeraci\xF3n."
   tiempoAntesDeColapsar: 280
   duracionColapso: 3
   profundidadColapso: 10
@@ -9229,6 +9221,7 @@ MonoBehaviour:
   fuenteAudioBip: {fileID: 1179647774}
   clipBip: {fileID: 8300000, guid: a0312cedb9e962053820f1c01423069e, type: 3}
   probabilidadBipExtra: 0.04
+  tamanoFuenteOpciones: 52
   textoFinalTrasDialogo: "S\xEDgueme..."
   guionRobot:
   - textoRobot: "\xA1Al fin alguien aqu\xED! No s\xE9 c\xF3mo entraste, pero has
@@ -11003,6 +10996,12 @@ MonoBehaviour:
   duracionAvisoRobot: 4
   fuenteAudioBip: {fileID: 0}
   clipBip: {fileID: 0}
+  tiempoParaResponder: 30
+  alturaCaidaParaReaparecer: 6
+  costoCaidaRefri: 20
+  costoCaidaAgua: 1
+  mensajeCaida: "> Ca\xEDda al vac\xEDo detectada.\nReconstruir el camino consumi\xF3
+    reservas de refrigeraci\xF3n."
   tiempoAntesDeColapsar: 4
   duracionColapso: 3
   profundidadColapso: 10
@@ -13435,6 +13434,12 @@ MonoBehaviour:
   duracionAvisoRobot: 4
   fuenteAudioBip: {fileID: 1179647774}
   clipBip: {fileID: 8300000, guid: a0312cedb9e962053820f1c01423069e, type: 3}
+  tiempoParaResponder: 30
+  alturaCaidaParaReaparecer: 6
+  costoCaidaRefri: 20
+  costoCaidaAgua: 1
+  mensajeCaida: "> Ca\xEDda al vac\xEDo detectada.\nReconstruir el camino consumi\xF3
+    reservas de refrigeraci\xF3n."
   tiempoAntesDeColapsar: 4
   duracionColapso: 3
   profundidadColapso: 10
@@ -15981,19 +15986,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f0a3934e54c29484ca7ce6421b05b65b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PanelHolografico
-  textoEnunciado: {fileID: 744038222}
-  botones:
-  - {fileID: 1391042773}
-  - {fileID: 1820709833}
-  - {fileID: 1581675994}
-  - {fileID: 783560115}
-  animator: {fileID: 0}
-  triggerAparecer: Aparecer
-  triggerDesaparecer: Desaparecer
+  distancia: 2.2
+  bajarMetros: 0.1
+  textoEncabezado: // CONSULTA DEL SISTEMA
+  textoBotonIA: RESPONDER CON IA
   duracionFadeSimple: 0.25
-  colorNormal: {r: 0.3, g: 0.85, b: 1, a: 0.85}
-  colorElegido: {r: 1, g: 1, b: 1, a: 1}
   duracionResaltado: 0.35
+  segundosUrgente: 10
 --- !u!1001 &1841015288
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16239,15 +16238,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.48394573
+      value: 0.47538957
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.48394573
+      value: 0.47538957
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.48394573
+      value: 0.47538957
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
       propertyPath: m_LocalPosition.x
@@ -16255,7 +16254,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.77
+      value: -2.4917
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -17350,7 +17349,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: fa800d3011e0b45ffb5ae746d1cb2e49, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -12.279
+      value: -15.548
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: fa800d3011e0b45ffb5ae746d1cb2e49, type: 3}
       propertyPath: m_LocalPosition.y
@@ -17358,7 +17357,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: fa800d3011e0b45ffb5ae746d1cb2e49, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -48.208
+      value: -47.987
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: fa800d3011e0b45ffb5ae746d1cb2e49, type: 3}
       propertyPath: m_LocalRotation.w
@@ -18235,7 +18234,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   refrigeracion: 100
   aguaConsumidaLitros: 0
-  inicialesJugador: 
   uiManager: {fileID: 830687498}
   nivelAgua: {fileID: 2066303128}
   sueloTunelFucsia: {fileID: 1798187101}
@@ -18253,7 +18251,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SenializacionRuta
   jugador: {fileID: 0}
-  colorLinea: {r: 0, g: 1, b: 0.34998167, a: 1}
+  colorLinea: {r: 1, g: 0, b: 1, a: 1}
   anchoLinea: 0.18
   alturaSobreSuelo: 0.04
   resolucionLinea: 0.4

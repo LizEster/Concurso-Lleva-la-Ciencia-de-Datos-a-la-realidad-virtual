@@ -110,6 +110,26 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Pone al jugador con los pies en 'pies' y anula la velocidad de caída (si no, al
+    /// reaparecer seguiría cayendo rápido y podría atravesar el piso).
+    /// </summary>
+    public void TeletransportarPies(Vector3 pies)
+    {
+        if (controller == null) controller = GetComponent<CharacterController>();
+
+        float desdePies = controller != null
+            ? -(controller.center.y - controller.height * 0.5f) * transform.lossyScale.y
+            : 1f;
+
+        bool estabaActivo = controller != null && controller.enabled;
+        if (controller != null) controller.enabled = false; // si no, el CharacterController ignora el cambio de posición
+        transform.position = pies + Vector3.up * (desdePies + 0.1f);
+        if (controller != null) controller.enabled = estabaActivo;
+
+        velocity = Vector3.zero;
+    }
+
     public void OnMove(InputValue value)
     {
         moveInput = value.Get<Vector2>();

@@ -9,10 +9,8 @@ public class GameManager : MonoBehaviour
     public float refrigeracion = 100f; 
     public float aguaConsumidaLitros = 0f;
     private bool juegoTerminado = false;
-
-    [Header("Iniciales del jugador")]
-    [Tooltip("Iniciales que el jugador escribió en el panel de la terminal (TerminalInteractiva). Se guardan aquí para poder usarlas después, por ejemplo cuando el robot desea suerte al llegar al Piso 1.")]
-    public string inicialesJugador = "";
+    /// <summary>True cuando el juego ya terminó (colapso térmico o éxito): no se reaparece al caer.</summary>
+    public bool JuegoTerminado => juegoTerminado;
 
     [Header("Referencias de UI")]
     public UIManager uiManager;

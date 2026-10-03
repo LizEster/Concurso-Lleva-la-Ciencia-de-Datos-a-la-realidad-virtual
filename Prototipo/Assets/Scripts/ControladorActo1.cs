@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 public class ControladorActo1 : MonoBehaviour
 {
     [Header("Referencias de la Escena")]
@@ -26,6 +27,10 @@ public class ControladorActo1 : MonoBehaviour
     [Tooltip("Probabilidad, por cada letra escrita, de que suene un bip extra de 'glitch' además del bip inicial de cada frase.")]
     public float probabilidadBipExtra = 0.04f;
 
+    [Header("Opciones del jugador")]
+    [Tooltip("Tamaño de letra de las opciones que se eligen mirándolas (usan la misma fuente que el texto de la terminal).")]
+    public float tamanoFuenteOpciones = 52f;
+
     [Header("Cierre del diálogo")]
     [TextArea(1, 2)]
     public string textoFinalTrasDialogo = "Sígueme...";
@@ -33,7 +38,8 @@ public class ControladorActo1 : MonoBehaviour
     // ------------------------------------------------------------------
     // GUION DEL ROBOT: cada nodo es una línea que dice el robot, mostrada
     // SOLO en su burbuja. Las opciones del jugador (las líneas "JUGADOR:")
-    // NUNCA entran a la burbuja: se muestran aparte, en el HUD de pantalla.
+    // NUNCA entran a la burbuja: aparecen aparte, en un panel flotante
+    // (PanelOpcionesMirada) y se eligen con la mirada + un botón.
     // ------------------------------------------------------------------
 
     [System.Serializable]
@@ -89,7 +95,6 @@ public class ControladorActo1 : MonoBehaviour
 
     private int nodoActual = 0;
     private bool esperandoOpcion = false;
-    private bool introEnCurso = true;
     private bool dialogoTerminado = false;
 
     /// <summary>
@@ -116,39 +121,13 @@ public class ControladorActo1 : MonoBehaviour
             NubeDialogoBot.Instancia.Ocultar();
         }
 
-        // Texto inicial en el HUD normal, sin pedir ninguna tecla: aparece solo y se
-        // borra solo después de 'duracionTextoInicial' segundos.
-        if (uiManager != null)
-        {
-            uiManager.MostrarMensajeTerminal(textoPantallaInicial);
-        }
+        // Primero el menú principal, y después su intro (negro + "Parece que te has
+        // perdido…" + el juego apareciendo de a poco). Recién ahí habla el robot.
+        // 'textoPantallaInicial' y 'duracionTextoInicial' los usa MenuPrincipal para esa intro.
+        yield return null; // deja que MenuPrincipal alcance a crearse
+        while (MenuPrincipal.Bloqueando) yield return null;
 
-        yield return new WaitForSeconds(duracionTextoInicial);
-
-        if (uiManager != null)
-        {
-            uiManager.MostrarMensajeTerminal("");
-        }
-
-        introEnCurso = false;
         MostrarNodo(0);
-    }
-
-    void Update()
-    {
-        if (introEnCurso || dialogoTerminado || !esperandoOpcion) return;
-
-        OpcionDialogo[] opciones = guionRobot[nodoActual].opciones;
-
-        // Botones A / B / X del control (o 1 / 2 / 3 en el teclado).
-        for (int i = 0; i < opciones.Length; i++)
-        {
-            if (EntradaVR.OpcionPresionada(i))
-            {
-                ElegirOpcion(i);
-                return;
-            }
-        }
     }
 
     private void MostrarNodo(int indice)
@@ -156,10 +135,7 @@ public class ControladorActo1 : MonoBehaviour
         nodoActual = indice;
         esperandoOpcion = false;
 
-        if (uiManager != null)
-        {
-            uiManager.MostrarOpciones(""); // limpia las opciones del nodo anterior
-        }
+        PanelOpcionesMirada.Ocultar(); // limpia las opciones del nodo anterior
 
         StartCoroutine(EscribirEnNube(guionRobot[indice].textoRobot, AlTerminarDeEscribir));
     }
@@ -214,22 +190,21 @@ public class ControladorActo1 : MonoBehaviour
 
         esperandoOpcion = true;
 
-        // Las opciones del jugador se muestran APARTE, en el HUD (uiManager), nunca
-        // dentro de la burbuja del robot.
-        string textoOpciones = "";
+        // Las opciones del jugador se muestran APARTE, en un panel flotante delante de la
+        // mirada (nunca dentro de la burbuja del robot), y se eligen con la mirada + un botón.
+        string[] textos = new string[opciones.Length];
         for (int i = 0; i < opciones.Length; i++)
         {
-            textoOpciones += $"{EntradaVR.EtiquetaOpcion(i)} {opciones[i].textoOpcion}\n";
+            textos[i] = opciones[i].textoOpcion;
         }
 
-        if (uiManager != null)
-        {
-            uiManager.MostrarOpciones(textoOpciones);
-        }
+        TMP_FontAsset fuente = uiManager != null && uiManager.textoTerminal != null ? uiManager.textoTerminal.font : null;
+        PanelOpcionesMirada.Mostrar(textos, fuente, tamanoFuenteOpciones, ElegirOpcion);
     }
 
     private void ElegirOpcion(int indice)
     {
+        if (!esperandoOpcion || dialogoTerminado) return;
         esperandoOpcion = false;
         int siguiente = guionRobot[nodoActual].opciones[indice].nodoSiguiente;
 
@@ -247,10 +222,7 @@ public class ControladorActo1 : MonoBehaviour
     {
         dialogoTerminado = true;
 
-        if (uiManager != null)
-        {
-            uiManager.MostrarOpciones(""); // ya no hay nada que elegir
-        }
+        PanelOpcionesMirada.Ocultar(); // ya no hay nada que elegir
 
         // El robot dice su última frase (con bip, igual que las demás) y el jugador queda
         // libre para avanzar.

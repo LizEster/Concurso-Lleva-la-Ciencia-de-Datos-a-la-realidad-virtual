@@ -36,7 +36,7 @@ public class UIManager : MonoBehaviour
 
     void Update()
     {
-        if (esperandoTeclaE && EntradaVR.InteractuarPresionado())
+        if (esperandoTeclaE && EntradaVR.InteractuarPresionado() && PunteroMirada.FrameUltimaEleccion != Time.frameCount)
         {
             esperandoTeclaE = false;
             ContinuarHaciaSiguienteEscena();
@@ -52,8 +52,8 @@ public class UIManager : MonoBehaviour
         }
 
         // Vaciamos el texto de fábrica ("New Text") del objeto: ControladorActo1 es
-        // quien decide qué se muestra aquí (el texto de "te has perdido", y más
-        // adelante las opciones del jugador), así que aquí no escribimos nada fijo.
+        // quien decide qué se muestra aquí (el texto de "te has perdido"); las opciones
+        // del jugador ya no van aquí, sino en PanelOpcionesMirada.
         if (textoTerminal != null)
         {
             textoTerminal.text = "";
@@ -75,17 +75,6 @@ public class UIManager : MonoBehaviour
         if (textoMétricas != null)
         {
             textoMétricas.gameObject.SetActive(true);
-        }
-    }
-
-    // NUEVO: muestra las opciones del jugador (fuera de la burbuja del robot) de una,
-    // sin animación letra por letra.
-    public void MostrarOpciones(string texto)
-    {
-        if (textoTerminal != null)
-        {
-            if (corrutinaEscritura != null) StopCoroutine(corrutinaEscritura);
-            textoTerminal.text = texto ?? "";
         }
     }
 
