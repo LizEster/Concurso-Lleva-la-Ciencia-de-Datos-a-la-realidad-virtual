@@ -24,6 +24,14 @@ public class BotGuia : MonoBehaviour
     [Tooltip("Suavizado vertical al subir o bajar escalones y rampas")]
     public float suavizadoVertical = 10f;
 
+    [Header("Centrado en el pasillo")]
+    [Tooltip("Camina por el medio del pasillo en vez de pegado a las esquinas, para que su globo de texto no atraviese las paredes")]
+    public bool centrarEnPasillo = true;
+    [Tooltip("Hasta qué distancia, a cada lado, busca paredes para centrarse")]
+    public float anchoBusquedaPasillo = 3f;
+    [Tooltip("Separación que intenta dejar con la pared cuando sólo hay pared de un lado")]
+    public float separacionMinimaPared = 1f;
+
     [Header("Cuerpo")]
     [Tooltip("Altura total del bot. La mitad de la del jugador (el CharacterController mide 2)")]
     public float altura = 1f;
@@ -57,8 +65,13 @@ public class BotGuia : MonoBehaviour
 
     private Material materialLuzInstancia;
 
+    private NubeDialogoBot nube;
+    private readonly RaycastHit[] bufferRayos = new RaycastHit[16];
+
     void Start()
     {
+        nube = GetComponentInChildren<NubeDialogoBot>();
+
         if (jugador == null)
         {
             GameObject playerObjeto = GameObject.FindGameObjectWithTag("Player");
@@ -224,15 +237,22 @@ public class BotGuia : MonoBehaviour
         if (adelante.sqrMagnitude < 0.0001f) adelante = jugador.forward;
         adelante.Normalize();
 
-        Vector3 destino = jugador.position + adelante * distanciaAdelante;
-        if (NavegacionSuelo.Instancia.AlturaDelSuelo(destino, out float alturaSuelo))
+        // Si hay una pared delante, el bot se pone antes de ella: si no, su globo queda dentro del muro.
+        float distancia = distanciaAdelante;
+        Vector3 ojos = cabeza != null ? cabeza.position : jugador.position;
+        float libre = DistanciaLibre(ojos, adelante, distanciaAdelante + 1f);
+        if (libre < distanciaAdelante + 0.8f) distancia = Mathf.Max(1.2f, libre - 0.8f);
+
+        Vector3 destino = jugador.position + adelante * distancia;
+        bool haySuelo = NavegacionSuelo.Instancia.AlturaDelSuelo(destino, out float alturaSuelo);
+        destino.y = haySuelo ? alturaSuelo : jugador.position.y - 1f; // aprox. la altura de los pies del jugador
+
+        if (haySuelo)
         {
-            destino.y = alturaSuelo + alturaSobreSuelo;
+            destino = CentrarEnPasillo(destino, adelante);
+            if (NavegacionSuelo.Instancia.AlturaDelSuelo(destino, out alturaSuelo)) destino.y = alturaSuelo;
         }
-        else
-        {
-            destino.y = jugador.position.y - 1f; // aprox. la altura de los pies del jugador
-        }
+        destino.y += alturaSobreSuelo;
 
         transform.position = destino;
         alturaObjetivo = destino.y;
@@ -271,7 +291,8 @@ public class BotGuia : MonoBehaviour
 
     /// <summary>
     /// Punto de la ruta que el bot intenta ocupar: avanza <see cref="distanciaAdelante"/> metros
-    /// sobre la misma línea que ve el jugador, así el bot siempre camina justo sobre ella.
+    /// sobre la misma línea que ve el jugador y, desde ahí, se corre al medio del pasillo
+    /// (la línea va pegada a las esquinas y el globo de texto se metería en la pared).
     /// </summary>
     private Vector3 ObtenerPuntoDeGuia()
     {
@@ -286,6 +307,7 @@ public class BotGuia : MonoBehaviour
         // Proyecta al jugador sobre la ruta y avanza a lo largo de ella.
         float restante = distanciaAdelante;
         Vector3 puntoActual = ruta[0];
+        Vector3 direccion = ruta[1] - ruta[0];
 
         for (int i = 0; i < ruta.Count - 1; i++)
         {
@@ -294,16 +316,90 @@ public class BotGuia : MonoBehaviour
             float largo = Vector3.Distance(inicio, fin);
             if (largo < 0.001f) continue;
 
+            direccion = fin - inicio;
             if (restante <= largo)
             {
-                return Vector3.Lerp(inicio, fin, restante / largo);
+                return CentrarEnPasillo(Vector3.Lerp(inicio, fin, restante / largo), direccion);
             }
 
             restante -= largo;
             puntoActual = fin;
         }
 
-        return puntoActual;
+        return CentrarEnPasillo(puntoActual, direccion);
+    }
+
+    /// <summary>
+    /// Corre un punto del suelo hacia el medio del pasillo, midiendo con rayos las paredes a
+    /// cada lado de la dirección de avance. Si sólo hay pared de un lado, se aleja de ella hasta
+    /// <see cref="separacionMinimaPared"/>. Nunca lo corre a donde no hay suelo (puente, vacío).
+    /// </summary>
+    private Vector3 CentrarEnPasillo(Vector3 punto, Vector3 direccion)
+    {
+        if (!centrarEnPasillo) return punto;
+
+        direccion.y = 0f;
+        if (direccion.sqrMagnitude < 0.0001f) return punto;
+        Vector3 derecha = Vector3.Cross(Vector3.up, direccion.normalized);
+
+        float izquierda = DistanciaAPared(punto, -derecha);
+        float aLaDerecha = DistanciaAPared(punto, derecha);
+        bool paredIzquierda = izquierda < anchoBusquedaPasillo;
+        bool paredDerecha = aLaDerecha < anchoBusquedaPasillo;
+
+        float desplazamiento = 0f;
+        if (paredIzquierda && paredDerecha) desplazamiento = (aLaDerecha - izquierda) * 0.5f;
+        else if (paredIzquierda) desplazamiento = Mathf.Max(0f, separacionMinimaPared - izquierda);
+        else if (paredDerecha) desplazamiento = -Mathf.Max(0f, separacionMinimaPared - aLaDerecha);
+
+        // Si no hay suelo hasta el punto corrido, prueba con la mitad del desplazamiento.
+        for (int intento = 0; intento < 2 && Mathf.Abs(desplazamiento) > 0.05f; intento++)
+        {
+            Vector3 candidato = punto + derecha * desplazamiento;
+            if (HaySueloEntre(punto, candidato)) return candidato;
+            desplazamiento *= 0.5f;
+        }
+
+        return punto;
+    }
+
+    /// <summary>Distancia a la pared más cercana en esa dirección, a la altura de las piernas y a la del globo.</summary>
+    private float DistanciaAPared(Vector3 suelo, Vector3 direccion)
+    {
+        float alturaGlobo = nube != null ? nube.alturaSobreElBot : altura * 1.25f;
+        return Mathf.Min(
+            DistanciaLibre(suelo + Vector3.up * 0.5f, direccion, anchoBusquedaPasillo),
+            DistanciaLibre(suelo + Vector3.up * alturaGlobo, direccion, anchoBusquedaPasillo));
+    }
+
+    /// <summary>Metros libres desde 'origen' en 'direccion' (o 'alcance' si no choca con nada del nivel).</summary>
+    private float DistanciaLibre(Vector3 origen, Vector3 direccion, float alcance)
+    {
+        float menor = alcance;
+        int impactos = Physics.RaycastNonAlloc(origen, direccion, bufferRayos, alcance, ~0, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < impactos; i++)
+        {
+            Collider colisionador = bufferRayos[i].collider;
+            if (colisionador == null || colisionador.CompareTag("Player")) continue;
+            if (colisionador.transform.IsChildOf(transform)) continue;
+            if (jugador != null && colisionador.transform.IsChildOf(jugador)) continue;
+            menor = Mathf.Min(menor, bufferRayos[i].distance);
+        }
+        return menor;
+    }
+
+    /// <summary>True si hay suelo continuo (sin escalones grandes ni huecos) entre los dos puntos.</summary>
+    private bool HaySueloEntre(Vector3 desde, Vector3 hasta)
+    {
+        NavegacionSuelo navegacion = NavegacionSuelo.Instancia;
+        int muestras = Mathf.Max(1, Mathf.CeilToInt(Vector3.Distance(desde, hasta) / 0.3f));
+        for (int i = 1; i <= muestras; i++)
+        {
+            Vector3 punto = Vector3.Lerp(desde, hasta, i / (float)muestras);
+            if (!navegacion.AlturaDelSuelo(punto, out float alturaSuelo)) return false;
+            if (Mathf.Abs(alturaSuelo - desde.y) > navegacion.maxDesnivel) return false;
+        }
+        return true;
     }
 
     private IReadOnlyList<Vector3> ObtenerRuta()
