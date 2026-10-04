@@ -346,6 +346,139 @@ public class NavegacionSuelo
         return true;
     }
 
+    // ------------------------------------------------------------------
+    // CENTRADO EN EL PASILLO: la ruta de CalcularRuta va tensa, pegada a las esquinas.
+    // Esto la lleva al medio para que la línea y el bot (y su globo) no rocen las paredes.
+    // ------------------------------------------------------------------
+
+    private readonly List<Vector3> muestrasCentrado = new List<Vector3>();
+    private readonly List<Vector3> puntosCentrados = new List<Vector3>();
+
+    /// <summary>
+    /// Lleva una ruta al medio de los pasillos: la remuestrea cada 'paso' metros, corre cada
+    /// punto al centro, la suaviza (curvas redondeadas) y descarta cualquier corrimiento que
+    /// la haga atravesar una pared o salirse del suelo. Sólo centra los primeros
+    /// 'metrosCentrados' (por rendimiento en el celular); el primer punto no se mueve.
+    /// </summary>
+    public void CentrarRuta(List<Vector3> ruta, float anchoBusqueda, float separacionMinima, float metrosCentrados, float paso = 0.4f)
+    {
+        if (ruta.Count < 2) return;
+
+        // 1. Remuestreo de los tramos que caen dentro de 'metrosCentrados'.
+        muestrasCentrado.Clear();
+        muestrasCentrado.Add(ruta[0]);
+        float recorrido = 0f;
+        int tramo = 0;
+        for (; tramo < ruta.Count - 1 && recorrido < metrosCentrados; tramo++)
+        {
+            float largo = Vector3.Distance(ruta[tramo], ruta[tramo + 1]);
+            int muestras = Mathf.Max(1, Mathf.CeilToInt(largo / paso));
+            for (int j = 1; j <= muestras; j++)
+            {
+                muestrasCentrado.Add(Vector3.Lerp(ruta[tramo], ruta[tramo + 1], j / (float)muestras));
+            }
+            recorrido += largo;
+        }
+
+        // Los puntos [1, ultimoCentrable) se centran; el último muestreado queda fijo como
+        // empalme con el resto de la ruta, que sigue tal cual.
+        int ultimoCentrable = muestrasCentrado.Count - 1;
+        for (int k = tramo + 1; k < ruta.Count; k++) muestrasCentrado.Add(ruta[k]);
+        if (ultimoCentrable < 2) return;
+
+        // 2. Cada punto, al medio del pasillo.
+        puntosCentrados.Clear();
+        puntosCentrados.AddRange(muestrasCentrado);
+        for (int i = 1; i < ultimoCentrable; i++)
+        {
+            Vector3 direccion = muestrasCentrado[i + 1] - muestrasCentrado[i - 1];
+            puntosCentrados[i] = CentrarPunto(muestrasCentrado[i], direccion, anchoBusqueda, separacionMinima);
+        }
+
+        // 3. Suavizado: quita los saltos donde el pasillo cambia de ancho y redondea las curvas.
+        for (int pasada = 0; pasada < 4; pasada++)
+        {
+            Vector3 anterior = puntosCentrados[0];
+            for (int i = 1; i < ultimoCentrable; i++)
+            {
+                Vector3 actual = puntosCentrados[i];
+                puntosCentrados[i] = (anterior + actual * 2f + puntosCentrados[i + 1]) * 0.25f;
+                anterior = actual;
+            }
+        }
+
+        // 4. Validación: si un tramo centrado choca o pierde el suelo, ese punto vuelve a la ruta original.
+        ruta.Clear();
+        ruta.Add(puntosCentrados[0]);
+        for (int i = 1; i < puntosCentrados.Count; i++)
+        {
+            Vector3 candidato = puntosCentrados[i];
+            if (i < ultimoCentrable)
+            {
+                if (AlturaDelSuelo(candidato, out float alturaSuelo)) candidato.y = alturaSuelo;
+                if (!TramoLibre(ruta[ruta.Count - 1], candidato)) candidato = muestrasCentrado[i];
+            }
+            ruta.Add(candidato);
+        }
+    }
+
+    /// <summary>
+    /// Corre un punto del suelo hacia el medio del pasillo, midiendo con rayos las paredes a
+    /// cada lado de 'direccion'. Si sólo hay pared de un lado, se aleja de ella hasta
+    /// 'separacionMinima'. Nunca lo corre a donde no hay suelo continuo (puente, vacío).
+    /// </summary>
+    public Vector3 CentrarPunto(Vector3 punto, Vector3 direccion, float anchoBusqueda, float separacionMinima, float alturaAlta = 1.25f)
+    {
+        direccion.y = 0f;
+        if (direccion.sqrMagnitude < 0.0001f) return punto;
+        Vector3 derecha = Vector3.Cross(Vector3.up, direccion.normalized);
+
+        float izquierda = DistanciaAPared(punto, -derecha, anchoBusqueda, alturaAlta);
+        float aLaDerecha = DistanciaAPared(punto, derecha, anchoBusqueda, alturaAlta);
+        bool paredIzquierda = izquierda < anchoBusqueda;
+        bool paredDerecha = aLaDerecha < anchoBusqueda;
+
+        float desplazamiento = 0f;
+        if (paredIzquierda && paredDerecha) desplazamiento = (aLaDerecha - izquierda) * 0.5f;
+        else if (paredIzquierda) desplazamiento = Mathf.Max(0f, separacionMinima - izquierda);
+        else if (paredDerecha) desplazamiento = -Mathf.Max(0f, separacionMinima - aLaDerecha);
+
+        // Si no hay suelo hasta el punto corrido, prueba con la mitad del desplazamiento.
+        for (int intento = 0; intento < 2 && Mathf.Abs(desplazamiento) > 0.05f; intento++)
+        {
+            Vector3 candidato = punto + derecha * desplazamiento;
+            if (HaySueloContinuo(punto, candidato) && AlturaDelSuelo(candidato, out float alturaSuelo)
+                && Mathf.Abs(alturaSuelo - punto.y) <= maxDesnivel)
+            {
+                return candidato;
+            }
+            desplazamiento *= 0.5f;
+        }
+
+        return punto;
+    }
+
+    /// <summary>Distancia a la pared más cercana en esa dirección, a la altura de las piernas y a 'alturaAlta'.</summary>
+    private float DistanciaAPared(Vector3 suelo, Vector3 direccion, float alcance, float alturaAlta)
+    {
+        return Mathf.Min(
+            DistanciaLibre(suelo + Vector3.up * 0.5f, direccion, alcance),
+            DistanciaLibre(suelo + Vector3.up * alturaAlta, direccion, alcance));
+    }
+
+    /// <summary>Metros libres desde 'origen' en 'direccion' (o 'alcance' si no choca con nada del nivel).</summary>
+    public float DistanciaLibre(Vector3 origen, Vector3 direccion, float alcance)
+    {
+        float menor = alcance;
+        int impactos = Physics.RaycastNonAlloc(origen, direccion, bufferRayos, alcance, ~0, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < impactos; i++)
+        {
+            if (EsIgnorable(bufferRayos[i].collider)) continue;
+            menor = Mathf.Min(menor, bufferRayos[i].distance);
+        }
+        return menor;
+    }
+
     private bool HayColision(Vector3 a, Vector3 b)
     {
         int cantidad = Physics.OverlapCapsuleNonAlloc(a, b, radioSondeo, bufferColisiones, ~0, QueryTriggerInteraction.Ignore);

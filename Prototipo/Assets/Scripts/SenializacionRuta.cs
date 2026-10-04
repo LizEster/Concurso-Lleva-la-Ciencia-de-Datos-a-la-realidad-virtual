@@ -30,6 +30,16 @@ public class SenializacionRuta : MonoBehaviour
     [Tooltip("La línea arranca a esta distancia del jugador, para que no le quede bajo los pies")]
     public float margenInicial = 0.6f;
 
+    [Header("Centrado en el pasillo")]
+    [Tooltip("Lleva la línea (y el camino del bot) al medio de los pasillos en vez de pegada a las esquinas")]
+    public bool centrarEnPasillo = true;
+    [Tooltip("Hasta qué distancia, a cada lado, busca paredes para centrarse")]
+    public float alcanceParedes = 8f;
+    [Tooltip("Separación que intenta dejar con la pared cuando sólo hay pared de un lado")]
+    public float separacionMinimaPared = 1f;
+    [Tooltip("Metros de ruta, desde el jugador, que se centran (más allá sigue la ruta directa). Bájalo si el celular va lento")]
+    public float metrosCentrados = 30f;
+
     [Header("Actualización de ruta")]
     [Tooltip("Cada cuántos segundos recalcula el camino (por rendimiento)")]
     public float intervaloRecalculo = 0.4f;
@@ -223,6 +233,11 @@ public class SenializacionRuta : MonoBehaviour
         }
 
         avisoSinRuta = false;
+        if (centrarEnPasillo)
+        {
+            NavegacionSuelo.Instancia.CentrarRuta(rutaSuavizada, alcanceParedes, separacionMinimaPared, metrosCentrados);
+        }
+
         if (!lineaVisible)
         {
             OcultarLinea();
