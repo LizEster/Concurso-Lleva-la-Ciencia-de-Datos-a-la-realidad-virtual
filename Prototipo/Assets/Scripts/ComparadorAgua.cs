@@ -221,7 +221,8 @@ public class ComparadorAgua : MonoBehaviour
         float anosBebiendo = LitrosEntrenamiento / (LitrosPorPersonaAlDia * 365f);
         textoLineas.text = $"<color=#33E6FF><b>{FormatoLitros(LitrosEntrenamiento)}</b> equivalen a...</color>\n\n" +
                            $"- unos <b>{vasosEntrenamiento:N0} vasos</b> de agua de 250 ml\n" +
-                           $"- el agua que toma <b>una persona en ~{anosBebiendo:N0} años</b>\n   <size=80%><color=#9FB7FF>(2 litros al día)</color></size>";
+                           $"- el agua que toma <b>una persona en ~{anosBebiendo:N0} años</b>\n   <size=80%><color=#9FB7FF>(2 litros al día)</color></size>\n\n" +
+                           $"<color=#33E6FF>Tu partida:</color> <b>{FormatoLitros(litrosJugador)}</b> = el agua que una persona toma en <b>{TiempoDeAgua(litrosJugador)}</b>.";
         yield return Animar(0.6f, t => textoLineas.alpha = t);
 
         textoVeredicto.text = "Tu partida fue una gota. Pero millones de personas consultan una IA cada día:\n<b>cada consulta que evitas o haces mejor, cuenta.</b>";
@@ -265,6 +266,26 @@ public class ComparadorAgua : MonoBehaviour
         float desde = grupo != null ? grupo.alpha : 0f;
         yield return Animar(0.6f, t => { if (grupo != null) grupo.alpha = desde * (1f - t); });
         Destroy(gameObject);
+    }
+
+    /// <summary>Cuánto tarda una persona en tomarse esa agua (2 litros al día), en la unidad que se entienda mejor.</summary>
+    private static string TiempoDeAgua(float litros)
+    {
+        float dias = litros / LitrosPorPersonaAlDia;
+        if (dias < 1f)
+        {
+            int horas = Mathf.RoundToInt(dias * 24f);
+            if (horas < 1) return "menos de 1 hora";
+            return horas == 1 ? "1 hora" : $"{horas} horas";
+        }
+        if (dias < 60f)
+        {
+            int d = Mathf.RoundToInt(dias);
+            return d == 1 ? "1 día" : $"{d} días";
+        }
+        if (dias < 730f) return $"{Mathf.RoundToInt(dias / 30f)} meses";
+        int a = Mathf.RoundToInt(dias / 365f);
+        return a == 1 ? "1 año" : $"{a} años";
     }
 
     private static string FormatoLitros(float litros)
