@@ -54,6 +54,36 @@ public class TerminalInteractiva : MonoBehaviour
     [Tooltip("El PlayerMovement del jugador: se desactiva mientras se lee la advertencia, para que no se aleje caminando. Si se deja vacío se busca solo.")]
     public PlayerMovement movimientoJugador;
 
+    [Header("Instrucciones (antes de la advertencia)")]
+    [Tooltip("Páginas que explican cómo son las preguntas, con un ejemplo. Se pasan con 'Siguiente' / 'Atrás' y la última termina en 'Acepto haber leído para jugar'. Acepta rich text.")]
+    [TextArea(6, 14)]
+    public string[] paginasInstrucciones =
+    {
+        "<align=center><b><color=#33E6FF>¿CÓMO SON LAS PREGUNTAS?</color></b></align>\n\n" +
+        "Una IA no entiende las palabras como tú: las guarda como <b>puntos en un mapa de significados</b>.\n\n" +
+        "Las palabras parecidas quedan cerca, y el \"camino\" entre dos palabras guarda su <b>relación</b>.\n\n" +
+        "Por eso la IA puede hacer <b>matemática con palabras</b>: quitar una idea y sumar otra.",
+
+        "<align=center><b><color=#33E6FF>EJEMPLO</color></b></align>\n\n" +
+        "<align=center><b>Santiago - Chile + Perú ≈ [¿?]</b></align>\n\n" +
+        "Opciones:   <b>Cusco</b>   ·   <b>Lima</b>   ·   <b>Sudamérica</b>\n\n" +
+        "<color=#33E6FF>Truco:</color> léelo como una frase.\n" +
+        "<i>\"Santiago es a Chile como ___ es a Perú\"</i>",
+
+        "<align=center><b><color=#33E6FF>SOLUCIÓN</color></b></align>\n\n" +
+        "1. <b>Santiago - Chile</b>: le quitas el país y queda la idea de <b>\"capital\"</b>.\n" +
+        "2. <b>+ Perú</b>: le sumas otro país: <b>\"capital de Perú\"</b>.\n\n" +
+        "<color=#40FF73><b>Lima</b>: ¡correcta!</color> Es la capital de Perú.\n" +
+        "<color=#FF8C26><b>Cusco</b></color>: es de Perú, pero no es la capital.\n" +
+        "<color=#FF8C26><b>Sudamérica</b></color>: es un continente, no una ciudad.\n\n" +
+        "<align=center>Así son todas las preguntas del puente.</align>"
+    };
+    public string textoBotonAceptarLectura = "Acepto haber leído para jugar";
+    public string textoSiguienteInstrucciones = "Siguiente >";
+    public string textoAtrasInstrucciones = "< Atrás";
+    [Tooltip("Tamaño de letra de las páginas de instrucciones (un poco menor que la advertencia porque tienen más texto).")]
+    public float tamanoFuenteInstrucciones = 40f;
+
     [Header("Advertencia antes de abrir la puerta")]
     [TextArea(6, 14)]
     [Tooltip("Mensaje que muestra la terminal antes de abrir la puerta. Acepta rich text de TextMeshPro (<b>, <color>, <align>...).")]
@@ -93,6 +123,7 @@ public class TerminalInteractiva : MonoBehaviour
     private bool puertaAbierta = false;
     private bool jugadorEnRango = false;
     private bool advertenciaAbierta = false;
+    private int paginaInstrucciones = 0;
     private bool avisoAcercarseDicho = false;
 
     private GameObject avisoGO;
@@ -145,7 +176,9 @@ public class TerminalInteractiva : MonoBehaviour
         ActualizarCercania();
         if (!jugadorEnRango) return;
 
-        if (!EntradaVR.InteractuarPresionado()) return;
+        // En el visor vale CUALQUIER botón del control (A, B, X, Y o gatillo), igual que en los
+        // menús: con el control Bluetooth del Shinecon no siempre llega como "A".
+        if (!EntradaVR.InteractuarPresionado() && !EntradaVR.ConfirmarPresionado()) return;
         if (PunteroMirada.FrameUltimaEleccion == Time.frameCount) return; // ese botón ya eligió una opción
 
         if (!terminalYaUsada)
@@ -209,9 +242,13 @@ public class TerminalInteractiva : MonoBehaviour
             if (jugador == null) return;
         }
 
-        float distancia = Vector3.Distance(jugador.position, transform.position);
+        // Distancia en el piso (sin la altura): el pivote del modelo y el del jugador/visor
+        // pueden estar a alturas distintas y eso dejaba al jugador "fuera de rango" estando al lado.
+        Vector3 diferencia = jugador.position - transform.position;
+        diferencia.y = 0f;
+        float distancia = diferencia.magnitude;
         bool estabaEnRangoAntes = jugadorEnRango;
-        jugadorEnRango = distancia <= distanciaDeActivacion;
+        jugadorEnRango = distancia <= distanciaDeActivacion || (distancia <= distanciaDeActivacion * 2f && MirandoLaTerminal());
         // El aviso ya no se oculta según la distancia: se queda siempre visible
         // (ver CrearAvisoFlotante()). Esto sólo controla si la tecla E funciona.
 
@@ -226,6 +263,17 @@ public class TerminalInteractiva : MonoBehaviour
                 NubeDialogoBot.Instancia.Mostrar(textoRobotAlAcercarse, duracionAvisoRobot);
             }
         }
+    }
+
+    /// <summary>True si la mirada (cabeza del visor o cámara en PC) apunta más o menos a la terminal.</summary>
+    private bool MirandoLaTerminal()
+    {
+        Transform cabeza = PunteroMirada.Cabeza();
+        if (cabeza == null) return false;
+        Vector3 objetivo = avisoGO != null ? avisoGO.transform.position : transform.position;
+        Vector3 hacia = objetivo - cabeza.position;
+        if (hacia.sqrMagnitude < 0.0001f) return true;
+        return Vector3.Angle(cabeza.forward, hacia) < 25f;
     }
 
     /// <summary>Texto 3D (no UI) flotando sobre la terminal, orientado siempre hacia la cámara.</summary>
@@ -268,9 +316,11 @@ public class TerminalInteractiva : MonoBehaviour
 
         ActualizarPosicionAviso();
 
-        if (Camera.main == null) return;
+        // En VR la cámara de los ojos no siempre es Camera.main: usamos la cabeza real.
+        Transform cabeza = PunteroMirada.Cabeza();
+        if (cabeza == null) return;
 
-        Vector3 haciaElAviso = avisoGO.transform.position - Camera.main.transform.position;
+        Vector3 haciaElAviso = avisoGO.transform.position - cabeza.position;
         haciaElAviso.y = 0f;
 
         if (haciaElAviso.sqrMagnitude > 0.0001f)
@@ -331,6 +381,43 @@ public class TerminalInteractiva : MonoBehaviour
         if (movimientoJugador != null) movimientoJugador.enabled = false;
 
         advertenciaAbierta = true;
+
+        // Primero las instrucciones con el ejemplo; recién después la advertencia y "Acepto el desafío".
+        paginaInstrucciones = 0;
+        if (paginasInstrucciones != null && paginasInstrucciones.Length > 0) MostrarPaginaInstrucciones();
+        else MostrarDesafio();
+    }
+
+    private void MostrarPaginaInstrucciones()
+    {
+        bool ultima = paginaInstrucciones >= paginasInstrucciones.Length - 1;
+        string principal = ultima ? textoBotonAceptarLectura : textoSiguienteInstrucciones;
+        string[] opciones = paginaInstrucciones > 0 ? new[] { principal, textoAtrasInstrucciones } : new[] { principal };
+
+        PanelOpcionesMirada.Mostrar(paginasInstrucciones[paginaInstrucciones], opciones, FuenteTerminal(),
+            tamanoFuenteInstrucciones, ElegirEnInstrucciones);
+    }
+
+    private void ElegirEnInstrucciones(int indice)
+    {
+        if (!advertenciaAbierta) return;
+        ReproducirBip();
+
+        if (indice == 0)
+        {
+            if (paginaInstrucciones >= paginasInstrucciones.Length - 1) { MostrarDesafio(); return; }
+            paginaInstrucciones++;
+        }
+        else
+        {
+            paginaInstrucciones = Mathf.Max(0, paginaInstrucciones - 1);
+        }
+        MostrarPaginaInstrucciones();
+    }
+
+    /// <summary>La advertencia de siempre, con "Acepto el desafío".</summary>
+    private void MostrarDesafio()
+    {
         PanelOpcionesMirada.Mostrar(textoAdvertencia, new[] { textoAceptar }, FuenteTerminal(),
             tamanoFuenteAdvertencia, _ => AceptarDesafio());
     }

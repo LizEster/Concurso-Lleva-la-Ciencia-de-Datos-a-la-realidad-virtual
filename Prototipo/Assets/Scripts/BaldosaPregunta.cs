@@ -254,7 +254,7 @@ public class BaldosaPregunta : MonoBehaviour
             string aviso = $"{mensajeCaida}\n> Caídas: {gm.Caidas}/{gm.caidasMaximas}" +
                            (quedan == 1 ? " - <color=red>¡la próxima es la última!</color>" : "") +
                            $"\n> Tiempo para responder: {gm.TiempoParaResponder(tiempoParaResponder):0} s";
-            gm.RegistrarGastoComputacional(costoCaidaRefri, costoCaidaAgua, aviso);
+            gm.RegistrarGastoComputacional(costoCaidaRefri, costoCaidaAgua, aviso, AvisoSistema.Tipo.Caida);
 
             // Si con esta caída se acabó el agua, la caída ES el final: no se reaparece.
             if (gm.JuegoTerminado) return;
@@ -380,6 +380,8 @@ public class BaldosaPregunta : MonoBehaviour
 
     private void DesplegarPreguntaEnUI()
     {
+        AvisoSistema.OcultarYa(); // el aviso de la respuesta anterior se va justo cuando llega esta pregunta
+
         if (panelHolograma != null)
         {
             panelHolograma.Mostrar(enunciadoPregunta, textoOpciones, AlElegirConMirada);

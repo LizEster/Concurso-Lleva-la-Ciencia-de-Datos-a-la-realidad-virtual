@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,6 +19,16 @@ public class ControladorActo1 : MonoBehaviour
     public string textoPantallaInicial = "Parece que te has perdido…";
     [Tooltip("Segundos que se muestra el texto inicial antes de que el robot empiece a hablar.")]
     public float duracionTextoInicial = 5f;
+    [Tooltip("Segunda línea de la intro, bajo 'Parece que te has perdido…': avisa que todavía no te puedes mover.")]
+    [TextArea(2, 3)]
+    public string textoNoPuedesMoverte = "Tu cuerpo aún no responde.\nSolo puedes <color=#33E6FF>girar la cabeza</color> para mirar a tu alrededor.";
+
+    [Header("Aviso al terminar el diálogo (todavía en negro)")]
+    public string tituloYaPuedesMoverte = "YA PUEDES MOVERTE";
+    [TextArea(2, 3)]
+    public string textoYaPuedesMoverte = "Camina con el <color=#33E6FF>joystick</color>.\nSigue al robot y la línea del piso.";
+    [Tooltip("Segundos que se lee el aviso en negro antes de que vuelva la imagen.")]
+    public float segundosAvisoMoverte = 2.2f;
 
     [Header("Bip de atención")]
     [Tooltip("Arrastra aquí un AudioSource (puede vivir en el propio robot, o en cualquier objeto).")]
@@ -41,6 +52,28 @@ public class ControladorActo1 : MonoBehaviour
     public float duracionFundidoANegro = 1f;
     public float segundosEnNegro = 0.6f;
     public float duracionFundidoDesdeNegro = 1.5f;
+
+    [Header("Páginas del diálogo")]
+    [Tooltip("Los textos largos del robot se parten solos en páginas de más o menos este largo (cortando entre frases). Para cortar a mano en un lugar exacto, escribe || dentro del texto.")]
+    public int maxCaracteresPorPagina = 170;
+    [Tooltip("Texto de la opción para pasar a la siguiente página.")]
+    public string textoBotonSiguiente = "Siguiente >";
+    [Tooltip("Texto de la opción para volver a la página (o al diálogo) anterior.")]
+    public string textoBotonAtras = "< Atrás";
+
+    [Header("Ajuste fino de dónde apareces")]
+    [Tooltip("Metros que se adelanta el punto de aparición, en la dirección hacia donde miras al aparecer (negativo = más atrás). La pared invisible se mueve junto con él.")]
+    public float adelantarAparicion = 2f;
+
+    [Header("No volver atrás (pared invisible)")]
+    [Tooltip("Después del diálogo, el jugador no puede retroceder más allá de donde aparece. No usa ningún objeto: es una pared invisible por código.")]
+    public bool bloquearVolverAtras = true;
+    [Tooltip("Metros que se puede retroceder desde donde apareces antes de chocar con la pared invisible.")]
+    public float margenHaciaAtras = 0.4f;
+    [Tooltip("Ancho de la pared invisible (metros). Que sea más ancho que el pasillo.")]
+    public float anchoBloqueo = 8f;
+    [Tooltip("Marca esto si la pared quedó delante en vez de detrás (bloquea el lado contrario).")]
+    public bool invertirBloqueo = false;
 
     [Header("Cierre del diálogo")]
     [TextArea(1, 2)]
@@ -105,6 +138,11 @@ public class ControladorActo1 : MonoBehaviour
     };
 
     private int nodoActual = 0;
+    private bool dialogoIniciado = false;
+    private float proximoAvisoBloqueo = 0f;
+    private List<string> paginas = new List<string>();
+    private int paginaActual = 0;
+    private readonly Stack<int> historial = new Stack<int>(); // nodos ya vistos, para "Atrás"
     private bool esperandoOpcion = false;
     private bool dialogoTerminado = false;
     private PlayerMovement movimientoJugador;
@@ -157,7 +195,21 @@ public class ControladorActo1 : MonoBehaviour
             botGuia.ColocarFrenteAlJugador();
         }
 
+        dialogoIniciado = true;
         MostrarNodo(0);
+    }
+
+    /// <summary>
+    /// Si durante la conversación el jugador empuja el joystick, le recordamos (con el aviso
+    /// del borde superior) que primero tiene que hablar con el robot. Máximo uno cada 6 s.
+    /// </summary>
+    void Update()
+    {
+        if (!dialogoIniciado || dialogoTerminado || Time.time < proximoAvisoBloqueo) return;
+        if (EntradaVR.Mover.magnitude < 0.6f) return;
+
+        proximoAvisoBloqueo = Time.time + 6f;
+        AvisoSistema.Mostrar(AvisoSistema.Tipo.Bloqueado, "", 0f, 0f);
     }
 
     private void CongelarJugador(bool congelar)
@@ -173,7 +225,103 @@ public class ControladorActo1 : MonoBehaviour
 
         PanelOpcionesMirada.Ocultar(); // limpia las opciones del nodo anterior
 
-        StartCoroutine(EscribirEnNube(guionRobot[indice].textoRobot, AlTerminarDeEscribir));
+        paginas = Paginar(guionRobot[indice].textoRobot, maxCaracteresPorPagina);
+        paginaActual = 0;
+        StartCoroutine(EscribirEnNube(paginas[0], AlTerminarDeEscribir, IndicadorPagina()));
+    }
+
+    /// <summary>¿Hay algo antes? (una página anterior de este texto o un diálogo anterior).</summary>
+    private bool PuedeVolver => paginaActual > 0 || historial.Count > 0;
+
+    /// <summary>
+    /// Parte un texto largo en páginas cortas, sin cortar frases a la mitad.
+    /// "||" fuerza un corte exacto. Una frase sola más larga que el máximo queda en su propia página.
+    /// </summary>
+    private static List<string> Paginar(string texto, int maximo)
+    {
+        List<string> resultado = new List<string>();
+        if (string.IsNullOrEmpty(texto)) { resultado.Add(""); return resultado; }
+
+        foreach (string bloque in texto.Split(new[] { "||" }, System.StringSplitOptions.RemoveEmptyEntries))
+        {
+            string[] frases = Regex.Split(bloque.Trim(), @"(?<=[.!?…])\s+(?=[¿¡""A-ZÁÉÍÓÚÑ])");
+            string pagina = "";
+            foreach (string frase in frases)
+            {
+                if (pagina.Length > 0 && pagina.Length + 1 + frase.Length > maximo)
+                {
+                    resultado.Add(pagina);
+                    pagina = "";
+                }
+                pagina = pagina.Length == 0 ? frase : pagina + " " + frase;
+            }
+            if (pagina.Length > 0) resultado.Add(pagina);
+        }
+        if (resultado.Count == 0) resultado.Add(texto);
+        return resultado;
+    }
+
+    /// <summary>"2/3" chiquito debajo del texto de la burbuja (vacío si el texto cabe en una página).</summary>
+    private string IndicadorPagina()
+    {
+        if (paginas.Count <= 1) return "";
+        return $"\n<size=60%><color=#7FFFD4>{paginaActual + 1}/{paginas.Count}</color></size>";
+    }
+
+    /// <summary>Opciones de una página intermedia: 0 = "Siguiente", 1 = "Atrás".</summary>
+    private void ElegirEnPagina(int indice)
+    {
+        if (!esperandoOpcion || dialogoTerminado) return;
+        esperandoOpcion = false;
+        PanelOpcionesMirada.Ocultar();
+        StartCoroutine(BorrarYCambiarPagina(indice == 0 ? 1 : -1));
+    }
+
+    private void Atras()
+    {
+        if (!esperandoOpcion || dialogoTerminado) return;
+        esperandoOpcion = false;
+        PanelOpcionesMirada.Ocultar();
+        StartCoroutine(BorrarYCambiarPagina(-1));
+    }
+
+    /// <summary>
+    /// Transición entre páginas: el texto se "borra" rápido (como retrocediendo).
+    /// Hacia adelante se escribe la siguiente letra por letra; hacia atrás la anterior aparece
+    /// de una (ya la leíste). Si estás en la primera página, "Atrás" vuelve al diálogo anterior.
+    /// </summary>
+    private IEnumerator BorrarYCambiarPagina(int direccion)
+    {
+        string anterior = paginas[paginaActual];
+        if (NubeDialogoBot.Instancia != null)
+        {
+            for (int largo = anterior.Length; largo > 0; largo -= 7)
+            {
+                NubeDialogoBot.Instancia.Mostrar(anterior.Substring(0, largo));
+                yield return null;
+            }
+        }
+
+        if (direccion > 0)
+        {
+            paginaActual++;
+            yield return EscribirEnNube(paginas[paginaActual], AlTerminarDeEscribir, IndicadorPagina());
+            yield break;
+        }
+
+        if (paginaActual > 0)
+        {
+            paginaActual--;
+        }
+        else if (historial.Count > 0)
+        {
+            nodoActual = historial.Pop();
+            paginas = Paginar(guionRobot[nodoActual].textoRobot, maxCaracteresPorPagina);
+            paginaActual = paginas.Count - 1;
+        }
+
+        if (NubeDialogoBot.Instancia != null) NubeDialogoBot.Instancia.Mostrar(paginas[paginaActual] + IndicadorPagina());
+        AlTerminarDeEscribir();
     }
 
     /// <summary>
@@ -181,7 +329,7 @@ public class ControladorActo1 : MonoBehaviour
     /// no tiene animación propia). Suena un bip al empezar la frase, y ocasionalmente algún
     /// bip extra "glitcheado" en medio, como si al robot se le distorsionara la voz al hablar.
     /// </summary>
-    private IEnumerator EscribirEnNube(string mensaje, System.Action alTerminar)
+    private IEnumerator EscribirEnNube(string mensaje, System.Action alTerminar, string sufijo = "")
     {
         if (NubeDialogoBot.Instancia == null)
         {
@@ -207,6 +355,8 @@ public class ControladorActo1 : MonoBehaviour
             yield return new WaitForSeconds(0.028f);
         }
 
+        if (!string.IsNullOrEmpty(sufijo)) NubeDialogoBot.Instancia.Mostrar(acumulado + sufijo);
+
         alTerminar?.Invoke();
     }
 
@@ -221,6 +371,17 @@ public class ControladorActo1 : MonoBehaviour
 
     private void AlTerminarDeEscribir()
     {
+        TMP_FontAsset fuente = uiManager != null && uiManager.textoTerminal != null ? uiManager.textoTerminal.font : null;
+
+        // Quedan páginas de este mismo texto: solo el botón "Siguiente".
+        if (paginaActual < paginas.Count - 1)
+        {
+            esperandoOpcion = true;
+            string[] botones = PuedeVolver ? new[] { textoBotonSiguiente, textoBotonAtras } : new[] { textoBotonSiguiente };
+            PanelOpcionesMirada.Mostrar(null, botones, fuente, tamanoFuenteOpciones, ElegirEnPagina, 0.45f);
+            return;
+        }
+
         OpcionDialogo[] opciones = guionRobot[nodoActual].opciones;
 
         if (opciones == null || opciones.Length == 0)
@@ -233,20 +394,22 @@ public class ControladorActo1 : MonoBehaviour
 
         // Las opciones del jugador se muestran APARTE, en un panel flotante delante de la
         // mirada (nunca dentro de la burbuja del robot), y se eligen con la mirada + un botón.
-        string[] textos = new string[opciones.Length];
+        // Al final va "Atrás" (si hay algo antes), para no elegirlo sin querer.
+        string[] textos = new string[opciones.Length + (PuedeVolver ? 1 : 0)];
         for (int i = 0; i < opciones.Length; i++)
         {
             textos[i] = opciones[i].textoOpcion;
         }
+        if (PuedeVolver) textos[opciones.Length] = textoBotonAtras;
 
         // Un poco más abajo de lo normal, para no tapar al robot ni su burbuja.
-        TMP_FontAsset fuente = uiManager != null && uiManager.textoTerminal != null ? uiManager.textoTerminal.font : null;
         PanelOpcionesMirada.Mostrar(null, textos, fuente, tamanoFuenteOpciones, ElegirOpcion, 0.45f);
     }
 
     private void ElegirOpcion(int indice)
     {
         if (!esperandoOpcion || dialogoTerminado) return;
+        if (indice >= guionRobot[nodoActual].opciones.Length) { Atras(); return; }
         esperandoOpcion = false;
         int siguiente = guionRobot[nodoActual].opciones[indice].nodoSiguiente;
 
@@ -256,6 +419,7 @@ public class ControladorActo1 : MonoBehaviour
         }
         else
         {
+            historial.Push(nodoActual);
             MostrarNodo(siguiente);
         }
     }
@@ -302,14 +466,37 @@ public class ControladorActo1 : MonoBehaviour
                 destino = padre != null ? padre.TransformPoint(posicionTrasDialogo) : posicionTrasDialogo;
                 rotacionY = rotacionYTrasDialogo + (padre != null ? padre.eulerAngles.y : 0f);
             }
+            // Ajuste fino: unos metros más adelante, en la dirección hacia donde miras.
+            destino += Quaternion.Euler(0f, rotacionY, 0f) * Vector3.forward * adelantarAparicion;
             movimientoJugador.TeletransportarA(destino, rotacionY);
+
+            // Pared invisible detrás de donde apareces: hacia dónde miras al aparecer es "adelante".
+            if (bloquearVolverAtras)
+            {
+                Vector3 haciaAdelante = Quaternion.Euler(0f, rotacionY, 0f) * Vector3.forward;
+                if (invertirBloqueo) haciaAdelante = -haciaAdelante;
+                movimientoJugador.ActivarLimiteTrasero(destino - haciaAdelante * margenHaciaAtras, haciaAdelante, anchoBloqueo);
+            }
         }
 
         yield return null; // un frame para que la cámara (y la cabeza en el visor) ya estén en el lugar nuevo
 
         if (botGuia != null) botGuia.ColocarFrenteAlJugador();
 
-        yield return new WaitForSeconds(segundosEnNegro);
+        // La línea del piso se enciende TODAVÍA EN NEGRO: así al volver la imagen ya están
+        // el robot y la línea juntos (antes la línea aparecía después, de golpe).
+        if (SenializacionRuta.Instancia != null) SenializacionRuta.Instancia.MostrarLinea(true);
+
+        yield return new WaitForSeconds(Mathf.Max(segundosEnNegro, 0.3f));
+
+        // Todavía en negro: "YA PUEDES MOVERTE" con un joystick que se mueve solo.
+        MensajeCentral aviso = MensajeCentral.Crear(tituloYaPuedesMoverte, textoYaPuedesMoverte, MensajeCentral.Icono.JoystickLibre);
+        yield return aviso.Aparecer();
+        yield return new WaitForSeconds(segundosAvisoMoverte);
+
+        // El aviso se va mientras vuelve la imagen, y desde ahí ya te puedes mover.
+        StartCoroutine(aviso.Desaparecer(duracionFundidoDesdeNegro * 0.8f));
+        CongelarJugador(false);
         yield return VeloNegro.Fundir(1f, 0f, duracionFundidoDesdeNegro);
 
         // El robot dice su última frase (con bip, igual que las demás).
@@ -318,7 +505,5 @@ public class ControladorActo1 : MonoBehaviour
         CongelarJugador(false);
         if (botGuia != null) botGuia.enPausa = false;
 
-        // Recién ahora que el jugador se puede mover aparece la línea del piso.
-        if (SenializacionRuta.Instancia != null) SenializacionRuta.Instancia.MostrarLinea(true);
     }
 }

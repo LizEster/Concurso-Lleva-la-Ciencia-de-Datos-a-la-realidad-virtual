@@ -16,10 +16,22 @@ public class VeloNegro : MonoBehaviour
 
     private RectTransform raiz;
     private Image imagen;
+    private Color colorVelo = Color.black;
+    private float alfaActual;
+
+    /// <summary>Opacidad actual del velo (0 = no se ve).</summary>
+    public static float AlfaActual => instancia != null ? instancia.alfaActual : 0f;
 
     public static IEnumerator Fundir(float desde, float hasta, float duracion)
     {
+        return FundirColor(Color.black, desde, hasta, duracion);
+    }
+
+    /// <summary>Igual que Fundir, pero de cualquier color (blanco = encandilamiento, rojo = alarma...).</summary>
+    public static IEnumerator FundirColor(Color color, float desde, float hasta, float duracion)
+    {
         VeloNegro velo = Obtener();
+        velo.colorVelo = color;
         float tiempo = 0f;
         while (tiempo < duracion)
         {
@@ -46,9 +58,18 @@ public class VeloNegro : MonoBehaviour
         return instancia;
     }
 
+    /// <summary>Pone el velo de un color y opacidad al tiro (para efectos que laten cuadro a cuadro).</summary>
+    public static void Poner(Color color, float alfa)
+    {
+        VeloNegro velo = Obtener();
+        velo.colorVelo = color;
+        velo.PonerOpacidad(alfa);
+    }
+
     private void PonerOpacidad(float alfa)
     {
-        imagen.color = new Color(0f, 0f, 0f, alfa);
+        alfaActual = alfa;
+        imagen.color = new Color(colorVelo.r, colorVelo.g, colorVelo.b, alfa);
         raiz.gameObject.SetActive(alfa > 0.001f);
         Seguir();
     }

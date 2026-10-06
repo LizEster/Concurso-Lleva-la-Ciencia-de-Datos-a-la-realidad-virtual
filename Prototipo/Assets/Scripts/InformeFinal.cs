@@ -13,9 +13,9 @@ using UnityEngine.UI;
 public class InformeFinal : MonoBehaviour
 {
     private const float Ancho = 1200f;
-    private const float Alto = 820f;
+    private const float Alto = 960f;   // más alto para que quepa el texto grande (se lee mejor en el visor)
     private const float MetrosPorPx = 0.0015f;
-    private const float Distancia = 2.3f;
+    private const float Distancia = 1.85f; // más cerca = todo se ve más grande en el visor
     private const float SegundosPorLetra = 0.025f;
 
     private string[] mensajes;
@@ -256,41 +256,41 @@ public class InformeFinal : MonoBehaviour
         lineaEscaneo = EstiloUI.CrearImagen(panel, "Escaneo", Vector2.zero, new Vector2(Ancho, 4f), Suave(0.12f)).rectTransform;
 
         // Encabezado: etiqueta + "chip" de estado.
-        TextMeshProUGUI etiqueta = EstiloUI.CrearTexto(panel, "// INFORME FINAL DEL SISTEMA", new Vector2(-260f, 370f), new Vector2(620f, 44f), 26f, Suave(0.7f), FontStyles.Normal);
+        TextMeshProUGUI etiqueta = EstiloUI.CrearTexto(panel, "// INFORME FINAL DEL SISTEMA", new Vector2(-240f, 420f), new Vector2(660f, 50f), 30f, Suave(0.7f), FontStyles.Normal);
         etiqueta.alignment = TextAlignmentOptions.Left;
-        Image chip = EstiloUI.CrearImagen(panel, "Chip", new Vector2(430f, 370f), new Vector2(260f, 50f), Suave(0.15f));
-        EstiloUI.CrearBorde(chip.rectTransform, 260f, 50f, 2f, acento);
-        EstiloUI.CrearTexto(chip.rectTransform, estado, Vector2.zero, new Vector2(250f, 46f), 26f, acento, FontStyles.Bold);
+        Image chip = EstiloUI.CrearImagen(panel, "Chip", new Vector2(420f, 420f), new Vector2(290f, 60f), Suave(0.15f));
+        EstiloUI.CrearBorde(chip.rectTransform, 290f, 60f, 2f, acento);
+        EstiloUI.CrearTexto(chip.rectTransform, estado, Vector2.zero, new Vector2(280f, 56f), 32f, acento, FontStyles.Bold);
 
         // Título.
-        textoTitulo = EstiloUI.CrearTexto(panel, titulo, new Vector2(0f, 290f), new Vector2(Ancho - 80f, 90f), 66f, acento, FontStyles.Bold);
+        textoTitulo = EstiloUI.CrearTexto(panel, titulo, new Vector2(0f, 335f), new Vector2(Ancho - 80f, 100f), 76f, acento, FontStyles.Bold);
         textoTitulo.characterSpacing = 5f;
         textoTitulo.enableAutoSizing = true;
-        textoTitulo.fontSizeMax = 66f;
-        textoTitulo.fontSizeMin = 40f;
-        EstiloUI.CrearImagen(panel, "Separador", new Vector2(0f, 238f), new Vector2(Ancho - 160f, 2f), Suave(0.4f));
+        textoTitulo.fontSizeMax = 76f;
+        textoTitulo.fontSizeMin = 48f;
+        EstiloUI.CrearImagen(panel, "Separador", new Vector2(0f, 275f), new Vector2(Ancho - 160f, 2f), Suave(0.4f));
 
         // Tarjetas.
-        valorAgua = CrearTarjeta(new Vector2(-385f, 150f), "AGUA EVAPORADA", "0.00 L");
-        valorRefri = CrearTarjeta(new Vector2(0f, 150f), "REFRIGERACIÓN", "0%");
-        CrearTarjeta(new Vector2(385f, 150f), "RENDIMIENTO", estado);
+        valorAgua = CrearTarjeta(new Vector2(-385f, 185f), "AGUA EVAPORADA", "0.00 L");
+        valorRefri = CrearTarjeta(new Vector2(0f, 185f), "REFRIGERACIÓN", "0%");
+        CrearTarjeta(new Vector2(385f, 185f), "RENDIMIENTO", estado);
 
-        EstiloUI.CrearImagen(panel, "BarraRefriFondo", new Vector2(0f, 108f), new Vector2(280f, 8f), Suave(0.15f));
-        Image barra = EstiloUI.CrearImagen(panel, "BarraRefri", new Vector2(-140f, 108f), new Vector2(0f, 8f), acento);
+        EstiloUI.CrearImagen(panel, "BarraRefriFondo", new Vector2(0f, 95f), new Vector2(280f, 8f), Suave(0.15f));
+        Image barra = EstiloUI.CrearImagen(panel, "BarraRefri", new Vector2(-140f, 95f), new Vector2(0f, 8f), acento);
         barraRefri = barra.rectTransform;
         barraRefri.pivot = new Vector2(0f, 0.5f);
 
         // Caja del mensaje.
-        Image caja = EstiloUI.CrearImagen(panel, "CajaMensaje", new Vector2(0f, -105f), new Vector2(Ancho - 100f, 300f), new Color(0f, 0f, 0f, 0.35f));
-        EstiloUI.CrearImagen(caja.rectTransform, "Acento", new Vector2(-(Ancho - 100f) * 0.5f, 0f), new Vector2(6f, 300f), acento);
-        textoMensaje = EstiloUI.CrearTexto(caja.rectTransform, "", Vector2.zero, new Vector2(Ancho - 180f, 270f), 34f, Color.white, FontStyles.Normal);
+        Image caja = EstiloUI.CrearImagen(panel, "CajaMensaje", new Vector2(0f, -100f), new Vector2(Ancho - 100f, 360f), new Color(0f, 0f, 0f, 0.35f));
+        EstiloUI.CrearImagen(caja.rectTransform, "Acento", new Vector2(-(Ancho - 100f) * 0.5f, 0f), new Vector2(6f, 360f), acento);
+        textoMensaje = EstiloUI.CrearTexto(caja.rectTransform, "", Vector2.zero, new Vector2(Ancho - 160f, 330f), 46f, Color.white, FontStyles.Normal);
         textoMensaje.alignment = TextAlignmentOptions.TopLeft;
         textoMensaje.enableWordWrapping = true;
         textoMensaje.enableAutoSizing = true;
-        textoMensaje.fontSizeMax = 34f;
-        textoMensaje.fontSizeMin = 22f;
+        textoMensaje.fontSizeMax = 46f;
+        textoMensaje.fontSizeMin = 34f;
         textoMensaje.richText = true;
-        indicadorSeguir = EstiloUI.CrearImagen(caja.rectTransform, "Listo", new Vector2((Ancho - 100f) * 0.5f - 24f, -126f), new Vector2(16f, 16f), acento);
+        indicadorSeguir = EstiloUI.CrearImagen(caja.rectTransform, "Listo", new Vector2((Ancho - 100f) * 0.5f - 24f, -156f), new Vector2(16f, 16f), acento);
         indicadorSeguir.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
         indicadorSeguir.gameObject.SetActive(false);
 
@@ -299,29 +299,29 @@ public class InformeFinal : MonoBehaviour
         float inicio = -(puntos.Length - 1) * 18f;
         for (int i = 0; i < puntos.Length; i++)
         {
-            puntos[i] = EstiloUI.CrearImagen(panel, "Pagina", new Vector2(inicio + i * 36f, -285f), new Vector2(14f, 14f), Suave(0.15f));
+            puntos[i] = EstiloUI.CrearImagen(panel, "Pagina", new Vector2(inicio + i * 36f, -312f), new Vector2(14f, 14f), Suave(0.15f));
             puntos[i].rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
         }
 
         GameObject zona = new GameObject("Botones", typeof(RectTransform));
         zona.transform.SetParent(panel, false);
         zonaBotones = (RectTransform)zona.transform;
-        zonaBotones.anchoredPosition = new Vector2(0f, -355f);
+        zonaBotones.anchoredPosition = new Vector2(0f, -405f);
     }
 
     private TextMeshProUGUI CrearTarjeta(Vector2 posicion, string etiqueta, string valor)
     {
-        Image tarjeta = EstiloUI.CrearImagen(panel, "Tarjeta", posicion, new Vector2(350f, 130f), Suave(0.07f));
-        EstiloUI.CrearBorde(tarjeta.rectTransform, 350f, 130f, 2f, Suave(0.35f));
-        EstiloUI.CrearTexto(tarjeta.rectTransform, etiqueta, new Vector2(0f, 38f), new Vector2(330f, 34f), 22f, new Color(1f, 1f, 1f, 0.6f), FontStyles.Normal).characterSpacing = 4f;
-        TextMeshProUGUI txt = EstiloUI.CrearTexto(tarjeta.rectTransform, valor, new Vector2(0f, -12f), new Vector2(330f, 64f), 50f, Color.white, FontStyles.Bold);
+        Image tarjeta = EstiloUI.CrearImagen(panel, "Tarjeta", posicion, new Vector2(360f, 150f), Suave(0.07f));
+        EstiloUI.CrearBorde(tarjeta.rectTransform, 360f, 150f, 2f, Suave(0.35f));
+        EstiloUI.CrearTexto(tarjeta.rectTransform, etiqueta, new Vector2(0f, 45f), new Vector2(345f, 40f), 28f, new Color(1f, 1f, 1f, 0.6f), FontStyles.Normal).characterSpacing = 4f;
+        TextMeshProUGUI txt = EstiloUI.CrearTexto(tarjeta.rectTransform, valor, new Vector2(0f, -15f), new Vector2(345f, 76f), 60f, Color.white, FontStyles.Bold);
         return txt;
     }
 
     private void CrearBoton(string texto, Vector2 posicion, float ancho, System.Action alElegir)
     {
         Color normal = new Color(acento.r * 0.15f, acento.g * 0.15f, acento.b * 0.15f, 0.95f);
-        EstiloUI.CrearBoton(zonaBotones, texto, posicion, new Vector2(ancho, 90f), 40f, normal, acento, acento, acento, alElegir);
+        EstiloUI.CrearBoton(zonaBotones, texto, posicion, new Vector2(ancho, 96f), 46f, normal, acento, acento, acento, alElegir);
     }
 
     private void LimpiarBotones()

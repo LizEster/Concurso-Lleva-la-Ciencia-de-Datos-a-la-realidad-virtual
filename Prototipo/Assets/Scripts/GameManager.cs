@@ -15,6 +15,8 @@ public class GameManager : MonoBehaviour
     [Header("Referencias de UI")]
     public UIManager uiManager;
     public NivelAgua nivelAgua;
+    [Tooltip("Muestra los resultados de cada pregunta/caída como aviso holográfico en el borde superior de la vista (en vez del texto blanco de la terminal).")]
+    public bool usarAvisosVisuales = true;
 
     [Header("Referencias del Mapa (Túnel Fucsia)")]
     [Tooltip("Arrastra aquí tu objeto 'Suelo_Tunel_Fucsia' desde la jerarquía")]
@@ -71,7 +73,12 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void RegistrarGastoComputacional(float costoRefrigeracion, float litrosAgua, string mensaje)
+    /// <summary>
+    /// Descuenta refrigeración/agua y avisa al jugador. Si viene 'tipo' (respuesta, IA o caída),
+    /// el mensaje sale como AvisoSistema (holograma en el borde superior de la vista) en vez
+    /// del texto blanco de la terminal.
+    /// </summary>
+    public void RegistrarGastoComputacional(float costoRefrigeracion, float litrosAgua, string mensaje, AvisoSistema.Tipo? tipo = null)
     {
         if (juegoTerminado) return;
 
@@ -83,7 +90,12 @@ public class GameManager : MonoBehaviour
         if (uiManager != null)
         {
             uiManager.ActualizarMétricas(refrigeracion, aguaConsumidaLitros);
-            uiManager.MostrarMensajeTerminal(mensaje);
+            if (tipo.HasValue && usarAvisosVisuales) uiManager.MostrarMensajeTerminal(""); // limpia el texto blanco viejo
+            else uiManager.MostrarMensajeTerminal(mensaje);
+        }
+        if (tipo.HasValue && usarAvisosVisuales)
+        {
+            AvisoSistema.Mostrar(tipo.Value, mensaje, costoRefrigeracion, litrosAgua);
         }
         if (nivelAgua != null)
         {
@@ -97,12 +109,15 @@ public class GameManager : MonoBehaviour
 
     public void RegistrarRespuesta(float costoRefrigeracion, float litrosAgua, string mensaje, bool esCorrecta)
     {
-        RegistrarGastoComputacional(costoRefrigeracion, litrosAgua, mensaje);
+        AvisoSistema.Tipo tipo = esCorrecta ? AvisoSistema.Tipo.Correcto
+            : (mensaje != null && mensaje.ToLowerInvariant().Contains("grave")) ? AvisoSistema.Tipo.ErrorGrave
+            : AvisoSistema.Tipo.Error;
+        RegistrarGastoComputacional(costoRefrigeracion, litrosAgua, mensaje, tipo);
     }
 
     public void UsarBotonIA()
     {
-        RegistrarGastoComputacional(DatosFinales.CostoIARefri, DatosFinales.CostoIAAgua, "> Respuesta generada automáticamente.\nMayor consumo computacional detectado por delegar razonamiento.");
+        RegistrarGastoComputacional(DatosFinales.CostoIARefri, DatosFinales.CostoIAAgua, "> Respuesta generada automáticamente.\nMayor consumo computacional detectado por delegar razonamiento.", AvisoSistema.Tipo.IA);
     }
 
     /// <summary>
@@ -129,13 +144,66 @@ public class GameManager : MonoBehaviour
         return Mathf.Max(tiempoMinimoParaResponder, tiempoBase - Caidas * segundosMenosPorCaida);
     }
 
+    // ------------------------------------------------------------------
+    // FINALES CON CAÍDA (colapso o demasiadas caídas): todo pegado a los ojos, para que en
+    // el visor se vea bien aunque el jugador vaya cayendo rápido.
+    // ------------------------------------------------------------------
+
+    private MensajeCentral mensajeFin;
+    private bool cargandoFinal;
+
+    /// <summary>
+    /// Alarma mientras caes: la vista late de un color (rojo = colapso, morado = perdido),
+    /// y un mensaje grande se "decodifica" delante de los ojos.
+    /// </summary>
+    private IEnumerator AlarmaDeCaida(Color color, string titulo, string subtitulo)
+    {
+        if (uiManager != null) uiManager.MostrarMensajeTerminal(""); // nada de texto blanco suelto
+        AvisoSistema.OcultarYa();
+
+        mensajeFin = MensajeCentral.Crear(titulo, subtitulo, MensajeCentral.Icono.Ninguno, 0f, color, true);
+        StartCoroutine(mensajeFin.Aparecer(0.15f));
+
+        Color tinte = new Color(color.r * 0.55f, color.g * 0.15f, color.b * 0.2f + (color.b > 0.8f ? 0.4f : 0f));
+        float t = 0f;
+        while (!cargandoFinal)
+        {
+            t += Time.deltaTime;
+            // Latido de alarma: dos golpes rápidos y una pausa, como un corazón.
+            float fase = Mathf.Repeat(t, 1.1f);
+            float golpe = Mathf.Max(Mathf.Exp(-Mathf.Pow((fase - 0.1f) * 14f, 2f)), 0.7f * Mathf.Exp(-Mathf.Pow((fase - 0.35f) * 14f, 2f)));
+            VeloNegro.Poner(tinte, 0.15f + 0.35f * golpe);
+            yield return null;
+        }
+    }
+
+    /// <summary>Dos destellos suaves del color del resultado, como una onda de energía que vuelve al sistema.</summary>
+    private IEnumerator OndasDeEnergia(Color color)
+    {
+        Color tinte = new Color(color.r, color.g, color.b, 1f);
+        for (int i = 0; i < 2 && !cargandoFinal; i++)
+        {
+            float t = 0f;
+            while (t < 0.75f && !cargandoFinal)
+            {
+                t += Time.deltaTime;
+                float a = t < 0.15f ? Mathf.Lerp(0f, 0.4f, t / 0.15f) : Mathf.Lerp(0.4f, 0f, (t - 0.15f) / 0.6f);
+                VeloNegro.Poner(tinte, a);
+                yield return null;
+            }
+            yield return new WaitForSeconds(0.25f);
+        }
+        if (!cargandoFinal) VeloNegro.Poner(tinte, 0f);
+    }
+
     private IEnumerator ProcesarFinPorCaidas()
     {
         juegoTerminado = true;
         Debug.Log("<color=red>> FIN: demasiadas caídas.</color>");
 
-        if (uiManager != null) uiManager.MostrarMensajeTerminal(mensajeSinCaidas);
         PanelOpcionesMirada.Ocultar();
+        StartCoroutine(AlarmaDeCaida(new Color(0.75f, 0.5f, 1f, 1f), "CONEXIÓN PERDIDA",
+            "Demasiadas caídas: el sistema perdió tu rastro en el vacío…"));
 
         // El jugador ya va cayendo: lo dejamos caer un poco más y pasamos al final.
         yield return new WaitForSeconds(segundosDeCaidaFinal);
@@ -154,8 +222,9 @@ public class GameManager : MonoBehaviour
         juegoTerminado = true;
         Debug.Log("<color=red>> COLAPSO TÉRMICO: el puente de datos se cae.</color>");
 
-        if (uiManager != null) uiManager.MostrarMensajeTerminal(mensajeColapso);
         PanelOpcionesMirada.Ocultar();
+        StartCoroutine(AlarmaDeCaida(new Color(1f, 0.3f, 0.3f, 1f), "COLAPSO TÉRMICO",
+            "Reservas de agua: <color=#FF4D4D><b>0%</b></color>\nEl sistema se sobrecalentó y el puente de datos se desintegra…"));
 
         // Se caen todas las baldosas (y el suelo del túnel, si está asignado).
         foreach (BaldosaPregunta baldosa in FindObjectsByType<BaldosaPregunta>(FindObjectsSortMode.None))
@@ -181,18 +250,27 @@ public class GameManager : MonoBehaviour
     /// <summary>Guarda los datos y pasa a la escena final con el destello blanco (igual en los dos finales).</summary>
     private void IrAEscenaFinal()
     {
-        TransicionLuz transicion = FindAnyObjectByType<TransicionLuz>();
-        if (transicion != null)
-        {
-            transicion.nombreEscenaFinal = escenaFinal;
-            transicion.IniciarTransicion(aguaConsumidaLitros, refrigeracion);
-            return;
-        }
+        if (cargandoFinal) return;
+        StartCoroutine(EncandilarYCargar());
+    }
 
+    /// <summary>
+    /// La vista se pone BLANCA (encandilamiento) con un velo pegado a los ojos y recién ahí
+    /// se carga la escena final. Antes se usaba el panel blanco del Canvas (TransicionLuz),
+    /// pero en el visor ese panel seguía la cabeza con retraso y, al caer, quedaba arriba
+    /// como una "pared blanca".
+    /// </summary>
+    private IEnumerator EncandilarYCargar()
+    {
+        cargandoFinal = true;
         DatosFinales.aguaConsumida = aguaConsumidaLitros;
         DatosFinales.refrigeracionRestante = refrigeracion;
-        if (ScreenFader.Instance != null) ScreenFader.Instance.TransicionarAEscena(escenaFinal);
-        else UnityEngine.SceneManagement.SceneManager.LoadScene(escenaFinal);
+
+        if (mensajeFin != null) StartCoroutine(mensajeFin.Desaparecer(1f));
+        yield return VeloNegro.FundirColor(Color.white, VeloNegro.AlfaActual, 1f, 1.5f);
+        yield return new WaitForSeconds(0.3f);
+
+        UnityEngine.SceneManagement.SceneManager.LoadScene(escenaFinal);
     }
 
     public void TerminarNivelConExito()
@@ -209,12 +287,45 @@ public class GameManager : MonoBehaviour
         juegoTerminado = true;
         Debug.Log("> FIN DEL PROCESAMIENTO: Iniciando transición a escena final.");
 
+        // ---------- ¡Celebración! ----------
+        if (uiManager != null) uiManager.MostrarMensajeTerminal("");
+        AvisoSistema.OcultarYa();
+        PanelOpcionesMirada.Ocultar();
+
+        // Color y título según cómo llegaste (igual que los finales).
+        Color color; string titulo;
+        if (refrigeracion >= 60f) { color = new Color(0.25f, 1f, 0.45f, 1f); titulo = "SISTEMA RESTAURADO"; }
+        else if (refrigeracion >= 25f) { color = new Color(1f, 0.85f, 0.2f, 1f); titulo = "PUENTE COMPLETADO"; }
+        else { color = new Color(1f, 0.55f, 0.15f, 1f); titulo = "COMPLETADO... APENAS"; }
+
+        int total = DatosFinales.decisiones.Count, correctas = 0;
+        foreach (DatosFinales.Decision d in DatosFinales.decisiones) if (d.elegida == d.correcta) correctas++;
+
+        // 1) Dos ondas de energía del color del resultado recorren la vista.
+        StartCoroutine(OndasDeEnergia(color));
+
+        // 2) El robot, ya sano, te da las gracias.
+        if (NubeDialogoBot.Instancia != null)
+            NubeDialogoBot.Instancia.Mostrar(refrigeracion >= 25f
+                ? "¡Lo lograste! El puente está completo y mis sistemas vuelven a respirar. ¡Gracias por pensar por ti misma/o!"
+                : "Llegamos… por muy poco. Mis reservas casi se secan, pero lo logramos.", 6f);
+
+        // 3) Mensaje grande que se decodifica delante de los ojos.
+        yield return new WaitForSeconds(0.4f);
+        mensajeFin = MensajeCentral.Crear(titulo,
+            $"Cruzaste las <b>{total}</b> preguntas · <b>{correctas}</b> correctas\n" +
+            $"Refrigeración restante: <b>{refrigeracion:0}%</b>\n<color=#33E6FF>La salida se abre…</color>",
+            MensajeCentral.Icono.Ninguno, 0f, color, true);
+        StartCoroutine(mensajeFin.Aparecer(0.3f));
+
+        // 4) Se abre la puerta y, tras unos segundos, la luz blanca te lleva al final.
+        yield return new WaitForSeconds(1.2f);
         if (puertaFinalOficina != null)
         {
             puertaFinalOficina.SetActive(false);
         }
 
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(3.8f);
 
         // Guarda los datos y carga la escena final (final1).
         DatosFinales.colapsoTermico = false;

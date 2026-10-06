@@ -26,6 +26,10 @@ public class ComparadorAgua : MonoBehaviour
     private const string FuenteDato = "Estimación de Li et al., 2023 (\"Making AI Less Thirsty\").";
     private const float LitrosPorVaso = 0.25f;
     private const float LitrosPorPersonaAlDia = 2f;
+    private const float LitrosPorDescargaWC = 6f;      // estanque de WC moderno
+    private const float LitrosPorDucha = 50f;          // ducha de ~5 min (~10 L/min)
+    private const float LitrosPiscinaOlimpica = 2500000f;
+    private const float PersonasEscala = 1000000f;     // "si 1 millón de personas jugaran como tú"
     // ----------------------------------------------------------------------
 
     private const float Ancho = 1000f;
@@ -144,13 +148,13 @@ public class ComparadorAgua : MonoBehaviour
             bool ia = d.elegida == DatosFinales.OpcionIA;
             bool acerto = d.elegida == d.correcta;
             string tipo = ia ? "<color=#FF66BF>con IA</color>" : acerto ? "<color=#40FF73>correcta</color>" : "<color=#FF8C26>incorrecta</color>";
-            sb.Append($"P{i + 1} · {tipo}<pos=74%>+{d.CostoAgua(d.elegida):0.00} L\n");
+            sb.Append($"P{i + 1} · {tipo}<pos=74%>-{d.CostoAgua(d.elegida):0.00} L\n");
             yield return SumarLinea(sb.ToString(), acumulado, acumulado + d.CostoAgua(d.elegida), escalaBase, escalaFinal);
             acumulado += d.CostoAgua(d.elegida);
         }
         if (aguaCaidas > 0.01f)
         {
-            sb.Append($"Caídas x{DatosFinales.caidas} <color=#9FB7FF>(reconstruir el camino)</color><pos=74%>+{aguaCaidas:0.00} L\n");
+            sb.Append($"Caídas x{DatosFinales.caidas} <color=#9FB7FF>(reconstruir el camino)</color><pos=74%>-{aguaCaidas:0.00} L\n");
             yield return SumarLinea(sb.ToString(), acumulado, litrosJugador, escalaBase, escalaFinal);
         }
         textoContador.text = FormatoLitros(litrosJugador);
@@ -216,13 +220,9 @@ public class ComparadorAgua : MonoBehaviour
         textoEquivalencia.text = $"~{veces:N0} veces tu partida";
         yield return Animar(0.4f, t => textoEquivalencia.alpha = t);
 
-        // El recuadro de abajo traduce los 700.000 L a cosas que se pueden imaginar.
-        float vasosEntrenamiento = LitrosEntrenamiento / LitrosPorVaso;
-        float anosBebiendo = LitrosEntrenamiento / (LitrosPorPersonaAlDia * 365f);
-        textoLineas.text = $"<color=#33E6FF><b>{FormatoLitros(LitrosEntrenamiento)}</b> equivalen a...</color>\n\n" +
-                           $"- unos <b>{vasosEntrenamiento:N0} vasos</b> de agua de 250 ml\n" +
-                           $"- el agua que toma <b>una persona en ~{anosBebiendo:N0} años</b>\n   <size=80%><color=#9FB7FF>(2 litros al día)</color></size>\n\n" +
-                           $"<color=#33E6FF>Tu partida:</color> <b>{FormatoLitros(litrosJugador)}</b> = el agua que una persona toma en <b>{TiempoDeAgua(litrosJugador)}</b>.";
+        // El recuadro de abajo traduce TUS litros a ejemplos de la vida real (personalizado).
+        textoLineas.enableWordWrapping = true; // las frases de este recuadro son largas
+        textoLineas.text = EjemploVidaReal(litrosJugador);
         yield return Animar(0.6f, t => textoLineas.alpha = t);
 
         textoVeredicto.text = "Tu partida fue una gota. Pero millones de personas consultan una IA cada día:\n<b>cada consulta que evitas o haces mejor, cuenta.</b>";
@@ -266,6 +266,51 @@ public class ComparadorAgua : MonoBehaviour
         float desde = grupo != null ? grupo.alpha : 0f;
         yield return Animar(0.6f, t => { if (grupo != null) grupo.alpha = desde * (1f - t); });
         Destroy(gameObject);
+    }
+
+    /// <summary>
+    /// "Ejemplo de vida real" calculado con el agua que gastó ESTE jugador:
+    /// vasos, cuánto tiempo de agua para tomar, el ejemplo cotidiano que mejor calce
+    /// (descargas de WC o duchas) y qué pasaría si 1 millón de personas jugaran igual.
+    /// </summary>
+    private static string EjemploVidaReal(float litros)
+    {
+        litros = Mathf.Max(0f, litros);
+        float vasos = litros / LitrosPorVaso;
+        string textoVasos = vasos < 1f ? "<b>menos de un vaso</b> de agua de 250 ml"
+                          : Mathf.RoundToInt(vasos) == 1 ? "<b>1 vaso</b> de agua de 250 ml"
+                          : $"<b>{vasos:N0} vasos</b> de agua de 250 ml";
+
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        sb.Append($"<color=#33E6FF>Tus <b>-{FormatoLitros(litros)}</b> en la vida real son...</color>\n\n");
+        sb.Append($"- {textoVasos}\n");
+        sb.Append($"- el agua que toma una persona en <b>{TiempoDeAgua(litros)}</b> <size=80%><color=#9FB7FF>(2 L al día)</color></size>\n");
+
+        if (litros >= LitrosPorDucha)
+        {
+            float duchas = litros / LitrosPorDucha;
+            sb.Append($"- <b>{Cantidad(duchas, "ducha", "duchas")}</b> de 5 minutos\n");
+        }
+        else if (litros >= LitrosPorDescargaWC)
+        {
+            float wc = litros / LitrosPorDescargaWC;
+            sb.Append($"- <b>{Cantidad(wc, "descarga", "descargas")}</b> del WC\n");
+        }
+
+        // A escala: si 1 millón de personas jugaran exactamente como tú.
+        float escala = litros * PersonasEscala;
+        string comparacion = escala >= LitrosPiscinaOlimpica
+            ? $"<b>{Cantidad(escala / LitrosPiscinaOlimpica, "piscina olímpica", "piscinas olímpicas")}</b>"
+            : $"el agua que toma una persona en <b>{TiempoDeAgua(escala)}</b>";
+        sb.Append($"\n<color=#33E6FF>Si 1 millón de personas jugaran como tú:</color> <b>-{FormatoLitros(escala)}</b> = {comparacion}.");
+        return sb.ToString();
+    }
+
+    /// <summary>"1 ducha" / "2,5 duchas": número con un decimal y singular/plural según cómo se ve.</summary>
+    private static string Cantidad(float valor, string singular, string plural)
+    {
+        string numero = valor >= 100f ? valor.ToString("N0") : valor.ToString("0.#");
+        return $"{numero} {(numero == "1" ? singular : plural)}";
     }
 
     /// <summary>Cuánto tarda una persona en tomarse esa agua (2 litros al día), en la unidad que se entienda mejor.</summary>

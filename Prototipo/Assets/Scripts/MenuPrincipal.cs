@@ -185,7 +185,21 @@ public class MenuPrincipal : MonoBehaviour
 
         yield return new WaitForSeconds(0.6f);                 // un momento en negro total
         yield return Fundir(t => grupoIntro.alpha = t, 1.2f);  // aparece el texto
-        yield return new WaitForSeconds(duracionTexto - 1.2f);
+
+        // Segunda línea: todavía no te puedes mover, solo mirar (con un joystick "trabado").
+        MensajeCentral inmovil = null;
+        string textoInmovil = acto1 != null ? acto1.textoNoPuedesMoverte : "";
+        if (!string.IsNullOrEmpty(textoInmovil))
+        {
+            yield return new WaitForSeconds(0.5f);
+            inmovil = MensajeCentral.Crear(null, textoInmovil, MensajeCentral.Icono.JoystickBloqueado, 0.36f);
+            yield return inmovil.Aparecer();
+            yield return new WaitForSeconds(2.5f);
+        }
+        else
+        {
+            yield return new WaitForSeconds(duracionTexto - 1.2f);
+        }
 
         // El juego aparece de a poco mientras el texto se va.
         const float duracionAparicion = 3f;
@@ -196,8 +210,10 @@ public class MenuPrincipal : MonoBehaviour
             float t = Mathf.Clamp01(tiempo / duracionAparicion);
             imagenVelo.color = new Color(0f, 0f, 0f, 1f - Mathf.SmoothStep(0f, 1f, t));
             grupoIntro.alpha = 1f - Mathf.Clamp01(t * 2f);
+            if (inmovil != null) inmovil.Alfa = grupoIntro.alpha;
             yield return null;
         }
+        if (inmovil != null) Destroy(inmovil.gameObject);
 
         // El jugador sigue quieto: ControladorActo1 lo suelta recién al terminar el diálogo.
         Bloqueando = false;

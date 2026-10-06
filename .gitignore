@@ -44,3 +44,4 @@ Build/*.apk
 *_BackUpThisFolder_ButDontShipItWithYourGame/
 *_BurstDebugInformation_DoNotShip/
 .DS_Store
+*.apk

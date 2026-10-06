@@ -15,6 +15,8 @@ public class PlayerMovement : MonoBehaviour
     public float anguloGiroPorPaso = 45f;
     [Tooltip("Qué tanto hay que empujar el stick derecho para girar (0 a 1).")]
     public float umbralGiro = 0.6f;
+    [Tooltip("Oscurece suavemente los bordes de la vista al moverse, caer o saltar (anti-mareo). Se ajusta en el componente VinetaConfort que aparece en el Player al jugar.")]
+    public bool vinetaConfort = true;
 
     private CharacterController controller;
     private Vector2 moveInput;
@@ -24,8 +26,59 @@ public class PlayerMovement : MonoBehaviour
     private Transform origenVR;
     private bool giroListo = true;
 
+    // Pared INVISIBLE detrás de un punto (sin objeto físico): el jugador no puede retroceder
+    // más allá de ella. Solo bloquea una franja de 'ancho' metros y hasta 'fondo' metros hacia atrás,
+    // así nunca afecta pasillos lejanos. No afecta al robot ni a la línea del piso.
+    private bool limiteActivo;
+    private Vector3 limitePunto, limiteAdelante, limiteDerecha;
+    private float limiteAncho, limiteFondo;
+
+    /// <summary>Activa la pared invisible: 'punto' es donde está, 'adelante' hacia dónde SÍ se puede ir.</summary>
+    public void ActivarLimiteTrasero(Vector3 punto, Vector3 adelante, float ancho = 8f, float fondo = 6f)
+    {
+        adelante.y = 0f;
+        if (adelante.sqrMagnitude < 0.0001f) return;
+        limiteAdelante = adelante.normalized;
+        limiteDerecha = Vector3.Cross(Vector3.up, limiteAdelante);
+        limitePunto = punto;
+        limiteAncho = ancho;
+        limiteFondo = fondo;
+        limiteActivo = true;
+    }
+
+    public void DesactivarLimiteTrasero() => limiteActivo = false;
+
+    private void AplicarLimiteTrasero()
+    {
+        if (!limiteActivo || controller == null || !controller.enabled) return;
+        Vector3 desfase = transform.position - limitePunto;
+        float atras = Vector3.Dot(desfase, limiteAdelante);      // < 0 = pasó la pared hacia atrás
+        float lado = Vector3.Dot(desfase, limiteDerecha);
+        if (atras < 0f && atras > -limiteFondo && Mathf.Abs(lado) < limiteAncho * 0.5f)
+        {
+            controller.Move(limiteAdelante * (-atras));            // lo devolvemos justo a la pared
+            AvisarQueNoHayVueltaAtras();
+        }
+    }
+
+    [Tooltip("Lo que dice el robot si intentas volver atrás después del diálogo.")]
+    public string textoRobotNoVolver = "¡Por ahí no hay salida! Sígueme por la línea.";
+    private float proximoAvisoLimite;
+
+    /// <summary>Aviso arriba ("NO HAY VUELTA ATRÁS") + el robot te llama. Como mucho uno cada 5 s.</summary>
+    private void AvisarQueNoHayVueltaAtras()
+    {
+        if (Time.time < proximoAvisoLimite) return;
+        proximoAvisoLimite = Time.time + 5f;
+
+        AvisoSistema.Mostrar(AvisoSistema.Tipo.SinRetorno, "", 0f, 0f);
+        if (NubeDialogoBot.Instancia != null) NubeDialogoBot.Instancia.Mostrar(textoRobotNoVolver, 3.5f);
+    }
+
     public bool EsVR => cabezaVR != null;
     public Transform CabezaVR => cabezaVR;
+    /// <summary>Movimiento de este frame: XZ = joystick, Y = caída/salto (lo usa VinetaConfort).</summary>
+    public Vector3 VelocidadActual { get; private set; }
 
     void Start()
     {
@@ -37,6 +90,9 @@ public class PlayerMovement : MonoBehaviour
     {
         cabezaVR = cabeza;
         origenVR = origen;
+
+        if (vinetaConfort && cabeza != null && GetComponent<VinetaConfort>() == null)
+            gameObject.AddComponent<VinetaConfort>().Configurar(this, cabeza);
     }
 
     void Update()
@@ -71,6 +127,10 @@ public class PlayerMovement : MonoBehaviour
 
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
+
+        AplicarLimiteTrasero();
+
+        VelocidadActual = new Vector3(move.x, velocity.y, move.z);
     }
 
     /// <summary>

@@ -677,11 +677,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.45134994
+      value: 0.66112554
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.0177
+      value: 1.2144644
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalPosition.x
@@ -689,11 +689,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -12.878
+      value: -12.6682
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -38.54
+      value: -38.5834
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1939,6 +1939,8 @@ MonoBehaviour:
   velocidadVR: 2.5
   anguloGiroPorPaso: 45
   umbralGiro: 0.6
+  vinetaConfort: 1
+  textoRobotNoVolver: "\xA1Por ah\xED no hay salida! S\xEDgueme por la l\xEDnea."
 --- !u!1001 &226201053
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2276,6 +2278,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e1bbe2e165ed4e14dae83b0120a44743, type: 3}
+--- !u!4 &255250764 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 416390, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
+  m_PrefabInstance: {fileID: 1806765355}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &258020914 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 409034, guid: a4c18952442944083b1fddc06ba477c2, type: 3}
@@ -3630,7 +3637,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 498518, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.0152321
+      value: 1.0388069
       objectReference: {fileID: 0}
     - target: {fileID: 498518, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
       propertyPath: m_LocalPosition.z
@@ -6075,7 +6082,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3703691207696672984, guid: c9914b10a3e38114d96b4e338aae337a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -62.65
+      value: -62.265
       objectReference: {fileID: 0}
     - target: {fileID: 3703691207696672984, guid: c9914b10a3e38114d96b4e338aae337a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -7326,15 +7333,36 @@ MonoBehaviour:
   distanciaDeActivacion: 4
   puntoAviso: {fileID: 0}
   alturaAviso: 2
-  textoAvisoAbrir: '[E] Abrir'
-  textoAvisoCerrar: '[E] Cerrar'
+  textoAvisoAbrir: '[Aprietar] Abrir'
+  textoAvisoCerrar: '[Aprietar] Cerrar'
   tamanoFuenteAviso: 1
   colorAviso: {r: 0, g: 1, b: 0, a: 1}
   animatorTerminal: {fileID: 920049210}
-  duracionAnimacionApertura: 3
+  duracionAnimacionApertura: 2
   normalizadoAbierta: 0
   normalizadoCerrada: 0.45
   movimientoJugador: {fileID: 0}
+  paginasInstrucciones:
+  - "<align=center><b><color=#33E6FF>\xBFC\xD3MO SON LAS PREGUNTAS?</color></b></align>\n\nUna
+    IA no entiende las palabras como t\xFA: las guarda como <b>puntos en un mapa
+    de significados</b>.\n\nLas palabras parecidas quedan cerca, y el \"camino\"
+    entre dos palabras guarda su <b>relaci\xF3n</b>.\n\nPor eso la IA puede hacer
+    <b>matem\xE1tica con palabras</b>: quitar una idea y sumar otra."
+  - "<align=center><b><color=#33E6FF>EJEMPLO</color></b></align>\n\n<align=center><b>Santiago
+    - Chile + Per\xFA \u2248 [\xBF?]</b></align>\n\nOpciones:   <b>Cusco</b>   \xB7  
+    <b>Lima</b>   \xB7   <b>Sudam\xE9rica</b>\n\n<color=#33E6FF>Truco:</color> l\xE9elo
+    como una frase.\n<i>\"Santiago es a Chile como ___ es a Per\xFA\"</i>"
+  - "<align=center><b><color=#33E6FF>SOLUCI\xD3N</color></b></align>\n\n1. <b>Santiago
+    - Chile</b>: le quitas el pa\xEDs y queda la idea de <b>\"capital\"</b>.\n2.
+    <b>+ Per\xFA</b>: le sumas otro pa\xEDs: <b>\"capital de Per\xFA\"</b>.\n\n<color=#40FF73><b>Lima</b>:
+    \xA1correcta!</color> Es la capital de Per\xFA.\n<color=#FF8C26><b>Cusco</b></color>:
+    es de Per\xFA, pero no es la capital.\n<color=#FF8C26><b>Sudam\xE9rica</b></color>:
+    es un continente, no una ciudad.\n\n<align=center>As\xED son todas las preguntas
+    del puente.</align>"
+  textoBotonAceptarLectura: "Acepto haber le\xEDdo para jugar"
+  textoSiguienteInstrucciones: Siguiente >
+  textoAtrasInstrucciones: "< Atr\xE1s"
+  tamanoFuenteInstrucciones: 40
   textoAdvertencia: "<align=center><b><color=#FF5555>ADVERTENCIA</color></b></align>\n\nAl
     abrirse la puerta comienza el puente de datos:\n\n- Cada baldosa tiene una pregunta
     y un <b>tiempo limitado</b> para responderla.\n- Si el tiempo se acaba, <b>el
@@ -8936,6 +8964,7 @@ Transform:
   - {fileID: 1010440848}
   - {fileID: 1808497983}
   - {fileID: 802551623}
+  - {fileID: 255250764}
   - {fileID: 838765209}
   - {fileID: 687355770}
   - {fileID: 430697088}
@@ -9226,6 +9255,12 @@ MonoBehaviour:
   barreraSalida: {fileID: 0}
   textoPantallaInicial: "Parece que te has perdido\u2026"
   duracionTextoInicial: 5
+  textoNoPuedesMoverte: "Tu cuerpo a\xFAn no responde.\nSolo puedes <color=#33E6FF>girar
+    la cabeza</color> para mirar a tu alrededor."
+  tituloYaPuedesMoverte: YA PUEDES MOVERTE
+  textoYaPuedesMoverte: "Camina con el <color=#33E6FF>joystick</color>.\nSigue al
+    robot y la l\xEDnea del piso."
+  segundosAvisoMoverte: 2.2
   fuenteAudioBip: {fileID: 1179647774}
   clipBip: {fileID: 8300000, guid: a0312cedb9e962053820f1c01423069e, type: 3}
   probabilidadBipExtra: 0.04
@@ -9236,6 +9271,14 @@ MonoBehaviour:
   duracionFundidoANegro: 1
   segundosEnNegro: 0.6
   duracionFundidoDesdeNegro: 1.5
+  maxCaracteresPorPagina: 170
+  textoBotonSiguiente: Siguiente >
+  textoBotonAtras: "< Atr\xE1s"
+  adelantarAparicion: 2
+  bloquearVolverAtras: 1
+  margenHaciaAtras: 0.4
+  anchoBloqueo: 8
+  invertirBloqueo: 0
   textoFinalTrasDialogo: "S\xEDgueme..."
   guionRobot:
   - textoRobot: "\xA1Al fin alguien aqu\xED! No s\xE9 c\xF3mo entraste, pero has
@@ -15417,6 +15460,9 @@ MonoBehaviour:
   velocidadRotacion: 8
   alturaSobreSuelo: 0.02
   suavizadoVertical: 10
+  centrarEnPasillo: 1
+  alcanceParedes: 8
+  separacionMinimaPared: 1
   altura: 1
   construirCuerpoAutomatico: 1
   materialCuerpo: {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
@@ -15685,6 +15731,71 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 13990f94448cc49c08e917134d8b0479, type: 3}
+--- !u!1001 &1806765355
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1136410508}
+    m_Modifications:
+    - target: {fileID: 119840, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
+      propertyPath: m_Name
+      value: Floor_01 (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 416390, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
+      propertyPath: m_RootOrder
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 416390, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 2.2157
+      objectReference: {fileID: 0}
+    - target: {fileID: 416390, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 4.7707934
+      objectReference: {fileID: 0}
+    - target: {fileID: 416390, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 3.62
+      objectReference: {fileID: 0}
+    - target: {fileID: 416390, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 19.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 416390, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -45.95
+      objectReference: {fileID: 0}
+    - target: {fileID: 416390, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 416390, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 416390, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 416390, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 498518, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.43414745
+      objectReference: {fileID: 0}
+    - target: {fileID: 2351466, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: c5a715f309b7f4f7283123dbbc0f2469, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
 --- !u!4 &1808497983 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 416390, guid: c76d2d3504ddb4847940a815cad04644, type: 3}
@@ -16251,6 +16362,10 @@ PrefabInstance:
       propertyPath: m_LocalPosition.y
       value: -18.96
       objectReference: {fileID: 0}
+    - target: {fileID: 861185468532627288, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: c5a715f309b7f4f7283123dbbc0f2469, type: 2}
     - target: {fileID: 8128668236925612103, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
       propertyPath: m_Name
       value: matrix_void
@@ -16273,7 +16388,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.4917
+      value: -2.94
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -16308,7 +16423,13 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: -1733953860223434196, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
+    - {fileID: -5143065024784578327, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
+    - {fileID: 40769475866335997, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
+    - {fileID: 4264498900603016295, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
+    - {fileID: 8777929068803319081, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
+    - {fileID: -6597080612831171876, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: -5645937942226959685, guid: 621f7511ef9394dc282f9c57d747ee9a, type: 3}
@@ -17368,7 +17489,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: fa800d3011e0b45ffb5ae746d1cb2e49, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -15.548
+      value: -14.917
       objectReference: {fileID: 0}
     - target: {fileID: 8897093224900880590, guid: fa800d3011e0b45ffb5ae746d1cb2e49, type: 3}
       propertyPath: m_LocalPosition.y
@@ -18255,6 +18376,7 @@ MonoBehaviour:
   aguaConsumidaLitros: 0
   uiManager: {fileID: 830687498}
   nivelAgua: {fileID: 2066303128}
+  usarAvisosVisuales: 1
   sueloTunelFucsia: {fileID: 1798187101}
   puertaFinalOficina: {fileID: 2041251414}
   caidasMaximas: 3
@@ -18287,6 +18409,10 @@ MonoBehaviour:
   velocidadFlujo: 1.5
   longitudVisible: 0
   margenInicial: 0.6
+  centrarEnPasillo: 1
+  alcanceParedes: 8
+  separacionMinimaPared: 1
+  metrosCentrados: 30
   intervaloRecalculo: 0.2
   distanciaLlegadaFinal: 2
 --- !u!114 &2066303128
@@ -18842,27 +18968,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1.1692722
+      value: 1.3444074
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.5840588
+      value: 0.7352133
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.3267311
+      value: 1.2476099
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -4.1183
+      value: -3.6432
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -13.35
+      value: -13.1989
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -37.7631
+      value: -37.7895
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 13d9c5811fd0fcf4986655f5dcf8d46f, type: 3}
       propertyPath: m_LocalRotation.w
